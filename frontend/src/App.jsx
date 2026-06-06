@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
-import { Sparkles, LogOut, MessageSquareCode } from 'lucide-react';
+import { Sparkles, LogOut, MessageSquareCode, User } from 'lucide-react';
 import { API_BASE_URL } from './config';
 import SubjectWorkspace from './components/SubjectWorkspace';
 import FriendFeed from './components/FriendFeed';
 import FriendManager from './components/FriendManager';
 import Recommendations from './components/Recommendations';
+import UserProfile from './components/UserProfile';
 import Auth from './components/Auth';
 import './App.css';
 
@@ -19,6 +20,7 @@ function App() {
   const [subjects, setSubjects] = useState([]);
   const [liveAlerts, setLiveAlerts] = useState([]);
   const [recTrigger, setRecTrigger] = useState(0);
+  const [activeProfileId, setActiveProfileId] = useState(null);
 
   // Load baseline configuration elements and token sessions
   useEffect(() => {
@@ -133,6 +135,7 @@ function App() {
 
       // Emit network broadcast across WebSockets
       socket.emit('task_completed', {
+        friendId: user.id,
         friendName: user.username, 
         subjectName,
         taskTitle,
@@ -158,10 +161,18 @@ function App() {
             PeerColab
           </h1>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
           <span style={{ fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
-            Welcome back, <strong style={{ color: 'var(--accent-purple)' }}>{user.username}</strong>!
+            Welcome back, <strong style={{ color: 'var(--accent-purple)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setActiveProfileId(user.id)} title="View Profile">{user.username}</strong>!
           </span>
+          <button 
+            onClick={() => setActiveProfileId(user.id)} 
+            className="btn-secondary" 
+            style={{ padding: '0.45rem 1rem', fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+          >
+            <User size={14} />
+            <span>My Profile</span>
+          </button>
           <button 
             onClick={handleLogout} 
             className="btn-secondary" 
@@ -204,11 +215,22 @@ function App() {
 
         {/* RIGHT COLUMN: SOCIAL TIMELINE FEED & NETWORK PIPELINE */}
         <div className="social-sidebar-column">
-          <FriendFeed liveAlerts={liveAlerts} />
-          <FriendManager userId={user.id} /> 
+          <FriendFeed liveAlerts={liveAlerts} onViewProfile={setActiveProfileId} />
+          <FriendManager userId={user.id} onViewProfile={setActiveProfileId} /> 
         </div>
 
       </main>
+
+      {/* USER PROFILE MODAL */}
+      {activeProfileId && (
+        <UserProfile 
+          userId={user.id} 
+          profileId={activeProfileId} 
+          onClose={() => setActiveProfileId(null)}
+          currentUsername={user.username}
+          isSelf={activeProfileId === user.id}
+        />
+      )}
     </div>
   );
 }

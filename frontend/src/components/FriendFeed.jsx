@@ -1,7 +1,7 @@
 import React from 'react';
 import { Zap, CheckCircle } from 'lucide-react';
 
-function FriendFeed({ liveAlerts }) {
+function FriendFeed({ liveAlerts, onViewProfile }) {
   return (
     <div className="feed-pane">
       <h3>
@@ -17,7 +17,13 @@ function FriendFeed({ liveAlerts }) {
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
                 <CheckCircle size={16} style={{ color: 'var(--accent-emerald)', marginTop: '0.15rem', flexShrink: 0 }} />
                 <div>
-                  <strong>{alert.friendName}</strong> completed{' '}
+                  <strong 
+                    style={{ cursor: alert.friendId ? 'pointer' : 'default', textDecoration: alert.friendId ? 'underline' : 'none' }}
+                    onClick={() => alert.friendId && onViewProfile(alert.friendId)}
+                    title={alert.friendId ? `View ${alert.friendName}'s profile` : ''}
+                  >
+                    {alert.friendName}
+                  </strong> completed{' '}
                   <span>"{alert.taskTitle}"</span> in <em>{alert.subjectName}</em>
                 </div>
               </div>

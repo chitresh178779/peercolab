@@ -173,4 +173,62 @@ router.get('/:userId/recommendations', async (req, res) => {
         res.status(500).json({ message: 'Recommendation failed', error: error.message });
     }
 });
+
+// @route   GET /api/users/:userId/profile
+// @desc    Get user profile details, including subjects and tasks
+router.get('/:userId/profile', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId).select('-password');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        
+        const subjects = await Subject.find({ owner: req.params.userId });
+        res.json({
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
+                friendsCount: user.friends.length
+            },
+            subjects
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+});
+
+// @route   GET /api/users/:userId/feed
+// @desc    Get recent task completion feed from friends
+router.get('/:userId/feed', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Fetch subjects belonging to friends
+        const friendsSubjects = await Subject.find({ owner: { $in: user.friends } }).populate('owner', 'username');
+        
+        let feed = [];
+        friendsSubjects.forEach(subj => {
+            subj.tasks.forEach(task => {
+                if (task.isCompleted) {
+                    feed.push({
+                        friendId: subj.owner._id,
+                        friendName: subj.owner.username,
+                        taskTitle: task.title,
+                        subjectName: subj.name,
+                        completedAt: task.completedAt || new Date()
+                    });
+                }
+            });
+        });
+
+        // Sort by completedAt descending
+        feed.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+        
+        // Return top 15 events
+        res.json(feed.slice(0, 15));
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+});
+
 module.exports = router;

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Users, Search, UserPlus, UserCheck } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
-function FriendManager({ userId }) {
+function FriendManager({ userId, onViewProfile }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [myFriends, setMyFriends] = useState([]);
@@ -108,7 +108,13 @@ function FriendManager({ userId }) {
         ) : (
           <div className="friends-tag-cloud">
             {myFriends.map((f, i) => (
-              <span key={f._id} className="friend-tag animate-fade-in" style={{ animationDelay: `${i * 0.03}s` }}>
+              <span 
+                key={f._id} 
+                className="friend-tag animate-fade-in" 
+                style={{ animationDelay: `${i * 0.03}s`, cursor: 'pointer' }}
+                onClick={() => onViewProfile(f._id)}
+                title={`Click to view ${f.username}'s profile`}
+              >
                 <UserCheck size={12} style={{ color: 'var(--accent-blue)' }} />
                 <span>{f.username}</span>
               </span>
