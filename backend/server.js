@@ -4,10 +4,13 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const connectDB = require('./config/db');
-
+const selfPing = require('./config/selfPing');
 
 // Connect to the database
 connectDB();
+
+// Start self-pinging to prevent Render service from sleeping
+selfPing();
 
 const app = express();
 
