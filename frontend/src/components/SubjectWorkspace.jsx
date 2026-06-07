@@ -195,11 +195,11 @@ function SubjectWorkspace({
                     <Shield size={12} />
                     <span>Teammates:</span>
                   </span>
-                  <span style={{ fontSize: '0.7rem', backgroundColor: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '1px 5px', borderRadius: '4px', color: 'var(--accent-purple)' }}>
+                  <span style={{ fontSize: '0.7rem', backgroundColor: '#ffffff', border: '2px solid #000000', padding: '2px 8px', borderRadius: '12px', color: '#000000', fontWeight: 700, boxShadow: '1.5px 1.5px 0px #000000' }}>
                     👑 {subject.owner?.username || 'Owner'}
                   </span>
                   {subject.collaborators?.map(collab => (
-                    <span key={collab._id} style={{ fontSize: '0.7rem', backgroundColor: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '1px 5px', borderRadius: '4px', color: 'var(--accent-blue)' }}>
+                    <span key={collab._id} style={{ fontSize: '0.7rem', backgroundColor: '#ffffff', border: '2px solid #000000', padding: '2px 8px', borderRadius: '12px', color: '#000000', fontWeight: 700, boxShadow: '1.5px 1.5px 0px #000000' }}>
                       {collab.username}
                     </span>
                   ))}
@@ -327,9 +327,10 @@ function SubjectWorkspace({
                                         fontSize: '0.7rem',
                                         padding: '2px 4px',
                                         borderRadius: '4px',
-                                        backgroundColor: 'rgba(15, 23, 42, 0.6)',
-                                        border: '1px solid var(--border-light)',
-                                        color: 'var(--text-secondary)',
+                                        backgroundColor: '#ffffff',
+                                        border: '2.5px solid #000000',
+                                        color: '#000000',
+                                        fontWeight: 700,
                                         cursor: 'pointer'
                                       }}
                                     >

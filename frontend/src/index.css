@@ -1,43 +1,43 @@
 :root {
-  /* Color Palette (Glassmorphic Neo-Brutalism) */
-  --bg-dark: #080a10;
-  --bg-card: rgba(13, 17, 28, 0.65);
-  --bg-card-hover: rgba(22, 28, 45, 0.75);
-  --border-light: rgba(255, 255, 255, 0.12);
-  --border-brutal: #1f2438;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  /* Color Palette (Sketchbook Light Brutalism) */
+  --bg-dark: #FAF8F5;        /* Warm sketchbook paper/cream */
+  --bg-card: #FFFFFF;        /* Crisp white paper cards */
+  --bg-card-hover: #FFFFFF;
+  --border-light: #000000;   /* Solid black ink lines */
+  --border-brutal: #000000;
+  --text-primary: #000000;   /* Ink black */
+  --text-secondary: #000000; /* Solid black */
+  --text-muted: #262626;     /* Dark charcoal */
 
-  /* Accent Colors */
-  --accent-purple: #a855f7;
-  --accent-purple-glow: rgba(168, 85, 247, 0.25);
-  --accent-blue: #3b82f6;
-  --accent-blue-glow: rgba(59, 130, 246, 0.25);
-  --accent-emerald: #10b981;
-  --accent-emerald-glow: rgba(16, 185, 129, 0.25);
-  --accent-rose: #f43f5e;
-  --accent-rose-glow: rgba(244, 63, 94, 0.25);
-  --accent-amber: #f59e0b;
-  --accent-amber-glow: rgba(245, 158, 11, 0.25);
+  /* Accents - Sketchbook ink highlights */
+  --accent-purple: #78716C;       /* Soft pencil gray */
+  --accent-purple-glow: rgba(120, 113, 108, 0.15);
+  --accent-blue: #2563EB;         /* Clean blueprint blue */
+  --accent-blue-glow: rgba(37, 99, 235, 0.1);
+  --accent-emerald: #15803D;      /* Deep ink green */
+  --accent-emerald-glow: rgba(22, 128, 61, 0.1);
+  --accent-rose: #B91C1C;         /* Muted ink red */
+  --accent-rose-glow: rgba(185, 28, 28, 0.1);
+  --accent-amber: #C2410C;        /* Mustard/ochre warning */
+  --accent-amber-glow: rgba(194, 65, 12, 0.1);
 
   /* Font Families */
   --font-heading: 'Space Grotesk', system-ui, -apple-system, sans-serif;
   --font-body: 'Outfit', system-ui, -apple-system, sans-serif;
 
-  /* Box Shadows (Brutalist flat offset shadows) */
-  --shadow-purple: 5px 5px 0px 0px var(--accent-purple);
-  --shadow-blue: 5px 5px 0px 0px var(--accent-blue);
-  --shadow-emerald: 5px 5px 0px 0px var(--accent-emerald);
-  --shadow-rose: 5px 5px 0px 0px var(--accent-rose);
-  --shadow-amber: 5px 5px 0px 0px var(--accent-amber);
-  --shadow-brutal: 6px 6px 0px 0px #000000;
-  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  /* Box Shadows (Brutalist flat offset sketchbook shadows) */
+  --shadow-purple: 4px 4px 0px 0px #000000;
+  --shadow-blue: 4px 4px 0px 0px #000000;
+  --shadow-emerald: 4px 4px 0px 0px #000000;
+  --shadow-rose: 4px 4px 0px 0px #000000;
+  --shadow-amber: 4px 4px 0px 0px #000000;
+  --shadow-brutal: 5px 5px 0px 0px #000000;
+  --shadow-glass: 5px 5px 0px 0px #000000;
 
   /* Transitions */
   --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-bounce: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  --transition-normal: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: all 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 * {
@@ -52,10 +52,10 @@ body {
   font-family: var(--font-body);
   min-height: 100vh;
   overflow-x: hidden;
+  /* Dotted paper background grid */
   background-image: 
-    radial-gradient(circle at 10% 20%, rgba(168, 85, 247, 0.12), transparent 40%),
-    radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.1), transparent 40%),
-    radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.08), transparent 50%);
+    radial-gradient(rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -69,11 +69,12 @@ body {
   background: var(--bg-dark);
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #D6D3D1; /* stone-300 */
   border-radius: 4px;
+  border: 1px solid #000000;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #A8A29E; /* stone-400 */
 }
 
 #root {
@@ -106,14 +107,12 @@ body {
   animation: float 4s ease-in-out infinite;
 }
 
-/* Glassmorphism Panel styles */
+/* Glassmorphism Panel styles - adapted to paper block style */
 .glass-card {
   background: var(--bg-card);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
   border: 2px solid var(--border-light);
   border-radius: 16px;
-  box-shadow: var(--shadow-glass);
+  box-shadow: var(--shadow-brutal);
   transition: var(--transition-normal);
   position: relative;
   overflow: hidden;

@@ -494,12 +494,14 @@ function UserProfile({ userId, profileId, onClose, currentUsername, isSelf }) {
                             gap: '0.35rem',
                             padding: '0.4rem 0.85rem',
                             borderRadius: '20px',
-                            border: isChecked ? '1.5px solid var(--accent-purple)' : '1.5px solid var(--border-light)',
-                            background: isChecked ? 'var(--accent-purple-glow)' : 'rgba(255,255,255,0.02)',
-                            color: isChecked ? '#e9d5ff' : 'var(--text-secondary)',
+                            border: '2px solid #000000',
+                            background: isChecked ? '#000000' : '#ffffff',
+                            color: isChecked ? '#ffffff' : '#000000',
                             fontSize: '0.825rem',
-                            fontWeight: 600,
+                            fontWeight: 700,
                             cursor: 'pointer',
+                            boxShadow: isChecked ? 'none' : '2px 2px 0px #000000',
+                            transform: isChecked ? 'translate(1px, 1px)' : 'none',
                             transition: 'var(--transition-fast)'
                           }}
                         >

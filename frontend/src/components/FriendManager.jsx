@@ -115,7 +115,7 @@ function FriendManager({ userId, onViewProfile }) {
                 onClick={() => onViewProfile(f._id)}
                 title={`Click to view ${f.username}'s profile`}
               >
-                <UserCheck size={12} style={{ color: 'var(--accent-blue)' }} />
+                <UserCheck size={12} style={{ color: '#000000' }} />
                 <span>{f.username}</span>
               </span>
             ))}

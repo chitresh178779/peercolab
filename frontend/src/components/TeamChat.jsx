@@ -189,49 +189,52 @@ function TeamChat({ user, socket }) {
       <div 
         style={{ 
           width: selectedFriend ? '30%' : '100%', 
-          borderRight: '1px solid var(--border-light)',
+          borderRight: '2.5px solid #000000',
           display: !selectedFriend ? 'flex' : 'none',
           flexDirection: 'column',
           height: '100%',
-          backgroundColor: 'rgba(15, 23, 42, 0.25)'
+          backgroundColor: '#faf8f5'
         }}
         className="chat-sidebar-desktop"
       >
-        <div style={{ padding: '1rem', borderBottom: '1px solid var(--border-light)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Users size={18} style={{ color: 'var(--accent-purple)' }} />
-          <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '1rem' }}>Study Partners</span>
+        <div style={{ padding: '1rem', borderBottom: '2.5px solid #000000', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Users size={18} style={{ color: '#000000' }} />
+          <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '1rem', color: '#000000' }}>Study Partners</span>
         </div>
         <div style={{ flexGrow: 1, overflowY: 'auto', padding: '0.5rem' }}>
           {friends.length === 0 ? (
-            <p style={{ fontSize: '0.825rem', color: 'var(--text-muted)', textAlign: 'center', marginTop: '2rem', fontStyle: 'italic' }}>
+            <p style={{ fontSize: '0.825rem', color: '#000000', textAlign: 'center', marginTop: '2rem', fontStyle: 'italic' }}>
               No study partners added yet. Go to Partners page to add friends!
             </p>
           ) : (
-            friends.map(friend => (
-              <div 
-                key={friend._id}
-                onClick={() => setSelectedFriend(friend)}
-                style={{
-                  padding: '0.75rem 1rem',
-                  borderRadius: '10px',
-                  cursor: 'pointer',
-                  marginBottom: '0.4rem',
-                  transition: 'var(--transition-fast)',
-                  backgroundColor: selectedFriend?._id === friend._id ? 'rgba(168, 85, 247, 0.12)' : 'transparent',
-                  border: '1px solid',
-                  borderColor: selectedFriend?._id === friend._id ? 'rgba(168, 85, 247, 0.25)' : 'transparent',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.65rem'
-                }}
-                className="chat-friend-item"
-              >
-                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-purple)' }} />
-                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: selectedFriend?._id === friend._id ? 'var(--accent-purple)' : 'var(--text-primary)' }}>
-                  {friend.username}
-                </span>
-              </div>
-            ))
+            friends.map(friend => {
+              const isSelected = selectedFriend?._id === friend._id;
+              return (
+                <div 
+                  key={friend._id}
+                  onClick={() => setSelectedFriend(friend)}
+                  style={{
+                    padding: '0.75rem 1rem',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    marginBottom: '0.4rem',
+                    transition: 'var(--transition-fast)',
+                    backgroundColor: isSelected ? '#000000' : 'transparent',
+                    border: '2px solid',
+                    borderColor: isSelected ? '#000000' : 'transparent',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.65rem'
+                  }}
+                  className="chat-friend-item"
+                >
+                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isSelected ? '#ffffff' : '#000000' }} />
+                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: isSelected ? '#ffffff' : '#000000' }}>
+                    {friend.username}
+                  </span>
+                </div>
+              );
+            })
           )}
         </div>
       </div>
@@ -279,7 +282,7 @@ function TeamChat({ user, socket }) {
                 <ChevronLeft size={20} />
               </button>
               <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '1.05rem', color: 'var(--accent-purple)' }}>
+                <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '1.05rem', color: '#000000' }}>
                   {selectedFriend.username}
                 </span>
                 <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Private Conversation</span>
@@ -350,14 +353,14 @@ function TeamChat({ user, socket }) {
                               borderRadius: '12px', 
                               borderTopRightRadius: isMe ? '2px' : '12px',
                               borderTopLeftRadius: isMe ? '12px' : '2px',
-                              backgroundColor: isMe ? 'rgba(168, 85, 247, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                              border: '1px solid',
-                              borderColor: isMe ? 'rgba(168, 85, 247, 0.35)' : 'var(--border-light)',
-                              color: 'var(--text-primary)',
+                              backgroundColor: isMe ? '#ffffff' : '#f5f5f4',
+                              border: '2px solid #000000',
+                              color: '#000000',
                               fontSize: '0.875rem',
                               lineHeight: 1.4,
                               wordBreak: 'break-word',
-                              boxShadow: isMe ? '2px 2px 0px rgba(168, 85, 247, 0.15)' : 'none'
+                              boxShadow: '2.5px 2.5px 0px #000000',
+                              fontWeight: 700
                             }}
                           >
                             {msg.content}
