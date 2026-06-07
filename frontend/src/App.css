@@ -1325,3 +1325,23 @@ form[style*="display: flex"] {
     gap: 1.25rem;
   }
 }
+
+/* Responsive direct messaging chat layouts */
+@media (min-width: 768px) {
+  .chat-sidebar-desktop {
+    display: flex !important;
+    width: 30% !important;
+  }
+  .chat-window-desktop {
+    display: flex !important;
+    width: 70% !important;
+  }
+}
+@media (max-width: 767px) {
+  .chat-sidebar-desktop {
+    width: 100% !important;
+  }
+  .chat-window-desktop {
+    width: 100% !important;
+  }
+}

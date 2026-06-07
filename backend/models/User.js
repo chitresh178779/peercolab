@@ -20,6 +20,13 @@ const UserSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'User' 
     }],
+    rejectedChallenges: [{
+        type: String
+    }],
+    lastActive: {
+        type: Date,
+        default: Date.now
+    }
 }, { timestamps: true }); // Automatically adds createdAt and updatedAt fields
 
 module.exports = mongoose.model('User', UserSchema);

@@ -1,13 +1,30 @@
 import { useState } from 'react';
-import { LayoutGrid, FolderPlus, Plus, BookOpen, CheckSquare, Lightbulb, CheckCircle, Save, Trash2 } from 'lucide-react';
+import { LayoutGrid, FolderPlus, Plus, BookOpen, CheckSquare, Lightbulb, CheckCircle, Save, Trash2, UserPlus, Shield } from 'lucide-react';
 
-function SubjectWorkspace({ subjects, onAddSubject, onDeleteSubject, onAddTask, onDeleteTask, onCompleteTask, onAddTip }) {
+function SubjectWorkspace({ 
+  subjects, 
+  currentUserId,
+  onAddSubject, 
+  onDeleteSubject, 
+  onAddTask, 
+  onDeleteTask, 
+  onCompleteTask, 
+  onAddTip,
+  onShareSubject,
+  onAssignTask
+}) {
   const [newSubjectName, setNewSubjectName] = useState('');
   const [newTaskTitles, setNewTaskTitles] = useState({});
   const [newTipContents, setNewTipContents] = useState({}); // Track tip inputs per subject
   const [activeTab, setActiveTab] = useState({}); // Track whether user is looking at 'tasks' or 'tips'
   const [subjectError, setSubjectError] = useState('');
   const [taskErrors, setTaskErrors] = useState({}); // subjectId -> error message
+
+  // Share state management
+  const [showShareForm, setShowShareForm] = useState({});
+  const [shareUsernames, setShareUsernames] = useState({});
+  const [shareErrors, setShareErrors] = useState({});
+  const [shareSuccess, setShareSuccess] = useState({});
 
   const handleSubjectSubmit = async (e) => {
     e.preventDefault();
@@ -45,6 +62,27 @@ function SubjectWorkspace({ subjects, onAddSubject, onDeleteSubject, onAddTask, 
     setNewTipContents({ ...newTipContents, [subjectId]: '' });
   };
 
+  const handleShareSubmit = async (e, subjectId) => {
+    e.preventDefault();
+    const username = shareUsernames[subjectId];
+    if (!username || !username.trim()) return;
+
+    setShareErrors(prev => ({ ...prev, [subjectId]: '' }));
+    setShareSuccess(prev => ({ ...prev, [subjectId]: '' }));
+
+    const res = await onShareSubject(subjectId, username);
+    if (res && !res.success) {
+      setShareErrors(prev => ({ ...prev, [subjectId]: res.error }));
+    } else {
+      setShareSuccess(prev => ({ ...prev, [subjectId]: 'Successfully shared subject!' }));
+      setShareUsernames(prev => ({ ...prev, [subjectId]: '' }));
+      setTimeout(() => {
+        setShareSuccess(prev => ({ ...prev, [subjectId]: '' }));
+        setShowShareForm(prev => ({ ...prev, [subjectId]: false }));
+      }, 2000);
+    }
+  };
+
   return (
     <div className="workspace-pane">
       <h3>
@@ -72,7 +110,7 @@ function SubjectWorkspace({ subjects, onAddSubject, onDeleteSubject, onAddTask, 
           <span>Add Subject</span>
         </button>
       </form>
-
+ 
       {subjectError && (
         <div className="animate-fade-in" style={{ color: 'var(--accent-rose)', fontSize: '0.875rem', marginTop: '-1.5rem', marginBottom: '1.5rem', paddingLeft: '0.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
           <span>⚠️</span>
@@ -85,42 +123,133 @@ function SubjectWorkspace({ subjects, onAddSubject, onDeleteSubject, onAddTask, 
       ) : (
         subjects.map((subject, idx) => {
           const currentTab = activeTab[subject._id] || 'tasks';
+          
+          // Check if current user is owner
+          const isOwner = subject.owner?._id === currentUserId || subject.owner === currentUserId;
 
           return (
             <div key={subject._id} className="subject-card animate-fade-in" style={{ animationDelay: `${idx * 0.08}s` }}>
-              {/* Header card with delete subject button */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h4 style={{ margin: 0 }}>
+              
+              {/* Header card with delete subject & share button */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                <h4 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <BookOpen size={18} style={{ color: 'var(--accent-blue)' }} />
                   <span>{subject.name}</span>
                 </h4>
-                <button
-                  onClick={() => {
-                    if (window.confirm(`Are you sure you want to delete the subject "${subject.name}" and all its tasks?`)) {
-                      onDeleteSubject(subject._id);
-                    }
-                  }}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--text-muted)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '4px',
-                    borderRadius: '4px',
-                    transition: 'var(--transition-fast)'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-rose)'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-                  title="Delete Subject"
-                >
-                  <Trash2 size={16} />
-                </button>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {isOwner && (
+                    <button
+                      onClick={() => setShowShareForm(prev => ({ ...prev, [subject._id]: !prev[subject._id] }))}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: showShareForm[subject._id] ? 'var(--accent-purple)' : 'var(--text-muted)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '4px',
+                        borderRadius: '4px',
+                        transition: 'var(--transition-fast)'
+                      }}
+                      onMouseEnter={(e) => { if (!showShareForm[subject._id]) e.currentTarget.style.color = 'var(--accent-purple)'; }}
+                      onMouseLeave={(e) => { if (!showShareForm[subject._id]) e.currentTarget.style.color = 'var(--text-muted)'; }}
+                      title="Share Subject Workspace"
+                    >
+                      <UserPlus size={16} />
+                    </button>
+                  )}
+
+                  {isOwner && (
+                    <button
+                      onClick={() => {
+                        if (window.confirm(`Are you sure you want to delete the subject "${subject.name}"?`)) {
+                          onDeleteSubject(subject._id);
+                        }
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        color: 'var(--text-muted)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '4px',
+                        borderRadius: '4px',
+                        transition: 'var(--transition-fast)'
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-rose)'}
+                      onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                      title="Delete Subject"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* Collaborator Badges */}
+              {(subject.isShared || (subject.collaborators && subject.collaborators.length > 0)) && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.5rem', marginBottom: '0.75rem', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                    <Shield size={12} />
+                    <span>Teammates:</span>
+                  </span>
+                  <span style={{ fontSize: '0.7rem', backgroundColor: 'rgba(168, 85, 247, 0.15)', border: '1px solid rgba(168, 85, 247, 0.3)', padding: '1px 5px', borderRadius: '4px', color: 'var(--accent-purple)' }}>
+                    👑 {subject.owner?.username || 'Owner'}
+                  </span>
+                  {subject.collaborators?.map(collab => (
+                    <span key={collab._id} style={{ fontSize: '0.7rem', backgroundColor: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '1px 5px', borderRadius: '4px', color: 'var(--accent-blue)' }}>
+                      {collab.username}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Share Form Popover */}
+              {showShareForm[subject._id] && (
+                <form 
+                  onSubmit={(e) => handleShareSubmit(e, subject._id)} 
+                  className="animate-fade-in"
+                  style={{ 
+                    backgroundColor: 'rgba(255, 255, 255, 0.03)', 
+                    border: '1px dashed var(--border-light)', 
+                    padding: '0.75rem', 
+                    borderRadius: '8px', 
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Partner username..."
+                      value={shareUsernames[subject._id] || ''}
+                      onChange={(e) => setShareUsernames({ ...shareUsernames, [subject._id]: e.target.value })}
+                      className="form-input-small"
+                      style={{ flexGrow: 1 }}
+                    />
+                    <button type="submit" className="btn-primary" style={{ padding: '0.45rem 1rem', fontSize: '0.75rem' }}>
+                      Invite
+                    </button>
+                  </div>
+                  {shareErrors[subject._id] && (
+                    <span style={{ fontSize: '0.725rem', color: 'var(--accent-rose)', fontWeight: 600 }}>
+                      ⚠️ {shareErrors[subject._id]}
+                    </span>
+                  )}
+                  {shareSuccess[subject._id] && (
+                    <span style={{ fontSize: '0.725rem', color: 'var(--accent-emerald)', fontWeight: 600 }}>
+                      ✓ {shareSuccess[subject._id]}
+                    </span>
+                  )}
+                </form>
+              )}
               
               {/* Tabs to switch between Tasks and Tips */}
-              <div className="tab-menu">
+              <div className="tab-menu" style={{ marginBottom: '1rem' }}>
                 <button 
                   className={currentTab === 'tasks' ? 'tab-btn active' : 'tab-btn'} 
                   onClick={() => setActiveTab({ ...activeTab, [subject._id]: 'tasks' })}
@@ -172,52 +301,92 @@ function SubjectWorkspace({ subjects, onAddSubject, onDeleteSubject, onAddTask, 
                     {subject.tasks && subject.tasks.length === 0 ? (
                       <p className="no-data" style={{ fontSize: '0.8rem', margin: '0.5rem 0' }}>No tasks. Add one above!</p>
                     ) : (
-                      subject.tasks?.map((task) => (
-                        <li key={task._id} className={task.isCompleted ? "task-done" : ""} style={{ gap: '10px' }}>
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexGrow: 1, minWidth: 0, wordBreak: 'break-word' }}>
-                            {task.isCompleted ? (
-                              <CheckCircle size={14} style={{ color: 'var(--accent-emerald)', flexShrink: 0 }} />
-                            ) : (
-                              <span style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid var(--text-muted)', display: 'inline-block', flexShrink: 0 }} />
-                            )}
-                            <span>{task.title}</span>
-                          </span>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                            {!task.isCompleted && (
-                              <button 
-                                onClick={() => onCompleteTask(subject._id, task._id, task.title, subject.name)}
-                                className="btn-complete animate-fade-in"
+                      subject.tasks?.map((task) => {
+                        const assignedToVal = task.assignedTo?._id || task.assignedTo || '';
+                        
+                        return (
+                          <li key={task._id} className={task.isCompleted ? "task-done" : ""} style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexGrow: 1, minWidth: 0, wordBreak: 'break-word', fontSize: '0.875rem' }}>
+                              {task.isCompleted ? (
+                                <CheckCircle size={14} style={{ color: 'var(--accent-emerald)', flexShrink: 0 }} />
+                              ) : (
+                                <span style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid var(--text-muted)', display: 'inline-block', flexShrink: 0 }} />
+                              )}
+                              <span>{task.title}</span>
+                            </span>
+                            
+                            {/* Collaborator Task Assignment Controls */}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              {(subject.isShared || (subject.collaborators && subject.collaborators.length > 0)) && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                                  {!task.isCompleted ? (
+                                    <select
+                                      value={assignedToVal}
+                                      onChange={(e) => onAssignTask(subject._id, task._id, e.target.value)}
+                                      style={{
+                                        fontSize: '0.7rem',
+                                        padding: '2px 4px',
+                                        borderRadius: '4px',
+                                        backgroundColor: 'rgba(15, 23, 42, 0.6)',
+                                        border: '1px solid var(--border-light)',
+                                        color: 'var(--text-secondary)',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      <option value="">Unassigned</option>
+                                      <option value={subject.owner?._id || subject.owner}>{subject.owner?.username || 'Owner'}</option>
+                                      {subject.collaborators?.map(collab => (
+                                        <option key={collab._id} value={collab._id}>{collab.username}</option>
+                                      ))}
+                                    </select>
+                                  ) : (
+                                    task.assignedTo && (
+                                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                                        Done by: {task.assignedTo?.username || 'Owner'}
+                                      </span>
+                                    )
+                                  )}
+                                </div>
+                              )}
+
+                              {!task.isCompleted && (
+                                <button 
+                                  onClick={() => onCompleteTask(subject._id, task._id, task.title, subject.name)}
+                                  className="btn-complete animate-fade-in"
+                                  style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
+                                >
+                                  <CheckCircle size={10} />
+                                  <span>Done</span>
+                                </button>
+                              )}
+                              
+                              <button
+                                onClick={() => {
+                                  if (window.confirm(`Are you sure you want to delete the task "${task.title}"?`)) {
+                                    onDeleteTask(subject._id, task._id);
+                                  }
+                                }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  color: 'var(--text-muted)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  padding: '4px',
+                                  borderRadius: '4px',
+                                  transition: 'var(--transition-fast)'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-rose)'}
+                                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                                title="Delete Task"
                               >
-                                <CheckCircle size={12} />
-                                <span>Done</span>
+                                <Trash2 size={13} />
                               </button>
-                            )}
-                            <button
-                              onClick={() => {
-                                if (window.confirm(`Are you sure you want to delete the task "${task.title}"?`)) {
-                                  onDeleteTask(subject._id, task._id);
-                                }
-                              }}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                cursor: 'pointer',
-                                color: 'var(--text-muted)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                padding: '4px',
-                                borderRadius: '4px',
-                                transition: 'var(--transition-fast)'
-                              }}
-                              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--accent-rose)'}
-                              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
-                              title="Delete Task"
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          </div>
-                        </li>
-                      ))
+                            </div>
+                          </li>
+                        );
+                      })
                     )}
                   </ul>
                 </>
@@ -246,8 +415,8 @@ function SubjectWorkspace({ subjects, onAddSubject, onDeleteSubject, onAddTask, 
                     ) : (
                       subject.tips?.map((tip, index) => (
                         <li key={tip._id || index} className="tip-item animate-fade-in">
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                            <Lightbulb size={16} style={{ color: 'var(--accent-amber)', marginTop: '0.15rem', flexShrink: 0 }} />
+                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.85rem' }}>
+                            <Lightbulb size={15} style={{ color: 'var(--accent-amber)', marginTop: '0.15rem', flexShrink: 0 }} />
                             <span>{tip.content}</span>
                           </div>
                         </li>

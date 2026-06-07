@@ -105,6 +105,31 @@ router.post('/:userId/add-friend', async (req, res) => {
         if (!isAlreadyFriend) {
             user.friends.push(friendId);
             await user.save();
+
+            // Create notification for the friend
+            try {
+                const Notification = require('../models/Notification');
+                const notification = new Notification({
+                    recipient: friendId,
+                    sender: user._id,
+                    type: 'friend_added',
+                    content: `${user.username} added you as a study partner!`
+                });
+                await notification.save();
+
+                const io = req.app.get('socketio');
+                const activeUsers = req.app.get('activeUsers');
+                if (io && activeUsers) {
+                    const friendSocketId = activeUsers[friendId.toString()];
+                    if (friendSocketId) {
+                        const populatedNotif = await notification.populate('sender', 'username');
+                        io.to(friendSocketId).emit('new_notification', populatedNotif);
+                    }
+                }
+            } catch (err) {
+                console.error("Error creating friend_added notification:", err);
+            }
+
             res.json({ message: 'Friend added successfully!', friends: user.friends });
         } else {
             res.status(400).json({ message: 'You are already study partners with this user!' });
@@ -136,17 +161,16 @@ router.get('/:userId/recommendations', async (req, res) => {
         });
 
         // 3. Loop through friends' tasks and find completed ones you haven't done
+        const rejected = new Set(user.rejectedChallenges || []);
         let recommendations = [];
         friendsSubjects.forEach(subj => {
 
-            
-
             subj.tasks.forEach(task => {
 
-                
                 const normalizedTitle = task.title.toLowerCase().trim();
+                const challengeKey = `${normalizedTitle}::${subj.name.toLowerCase().trim()}`;
                 
-                if (task.isCompleted && !myTaskTitles.has(normalizedTitle)) {
+                if (task.isCompleted && !myTaskTitles.has(normalizedTitle) && !rejected.has(challengeKey)) {
                     recommendations.push({
                         title: task.title,
                         suggestedBy: subj.owner.username,
@@ -171,6 +195,30 @@ router.get('/:userId/recommendations', async (req, res) => {
         res.json(uniqueRecs);
     } catch (error) {
         res.status(500).json({ message: 'Recommendation failed', error: error.message });
+    }
+});
+
+// @route   POST /api/users/:userId/challenges/reject
+// @desc    Reject / dismiss a peer challenge suggestion
+router.post('/:userId/challenges/reject', async (req, res) => {
+    try {
+        const { title, subjectName } = req.body;
+        if (!title || !subjectName) {
+            return res.status(400).json({ message: 'Title and subjectName are required' });
+        }
+
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        const challengeKey = `${title.toLowerCase().trim()}::${subjectName.toLowerCase().trim()}`;
+        if (!user.rejectedChallenges.includes(challengeKey)) {
+            user.rejectedChallenges.push(challengeKey);
+            await user.save();
+        }
+
+        res.json({ success: true, message: 'Challenge rejected successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error rejecting challenge', error: error.message });
     }
 });
 
@@ -224,8 +272,8 @@ router.get('/:userId/feed', async (req, res) => {
         // Sort by completedAt descending
         feed.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
         
-        // Return top 15 events
-        res.json(feed.slice(0, 15));
+        // Return top 50 events for split stream history
+        res.json(feed.slice(0, 50));
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }

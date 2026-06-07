@@ -31,7 +31,11 @@ router.post('/', async (req, res) => {
         });
 
         const savedSubject = await newSubject.save();
-        res.status(201).json(savedSubject);
+        const populated = await Subject.findById(savedSubject._id)
+            .populate('owner', 'username')
+            .populate('collaborators', 'username')
+            .populate('tasks.assignedTo', 'username');
+        res.status(201).json(populated);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
@@ -74,7 +78,11 @@ router.post('/:subjectId/tasks', async (req, res) => {
         subject.tasks.push({ title: title.trim() });
         await subject.save();
 
-        res.json(subject);
+        const populated = await Subject.findById(subject._id)
+            .populate('owner', 'username')
+            .populate('collaborators', 'username')
+            .populate('tasks.assignedTo', 'username');
+        res.json(populated);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
@@ -91,7 +99,11 @@ router.delete('/:subjectId/tasks/:taskId', async (req, res) => {
         subject.tasks.pull({ _id: req.params.taskId });
         await subject.save();
 
-        res.json(subject);
+        const populated = await Subject.findById(subject._id)
+            .populate('owner', 'username')
+            .populate('collaborators', 'username')
+            .populate('tasks.assignedTo', 'username');
+        res.json(populated);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
@@ -120,10 +132,19 @@ router.put('/:subjectId/tasks/:taskId', async (req, res) => {
 });
 
 // @route   GET /api/subjects/user/:userId
-// @desc    Get all subjects (and nested tasks/tips) for a specific user
+// @desc    Get all subjects (owned and shared) for a specific user
 router.get('/user/:userId', async (req, res) => {
     try {
-        const subjects = await Subject.find({ owner: req.params.userId });
+        const subjects = await Subject.find({
+            $or: [
+                { owner: req.params.userId },
+                { collaborators: req.params.userId }
+            ]
+        })
+        .populate('owner', 'username')
+        .populate('collaborators', 'username')
+        .populate('tasks.assignedTo', 'username');
+        
         res.json(subjects);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
@@ -145,9 +166,123 @@ router.post('/:subjectId/tips', async (req, res) => {
         subject.tips.push({ content: content.trim() });
         await subject.save();
         
-        res.status(201).json(subject);
+        const populated = await Subject.findById(subject._id)
+            .populate('owner', 'username')
+            .populate('collaborators', 'username')
+            .populate('tasks.assignedTo', 'username');
+
+        res.status(201).json(populated);
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
+    }
+});
+
+// @route   POST /api/subjects/:subjectId/share
+// @desc    Share a subject workspace with a user (by username)
+router.post('/:subjectId/share', async (req, res) => {
+    try {
+        const { username } = req.body;
+        if (!username || !username.trim()) {
+            return res.status(400).json({ message: 'Username is required' });
+        }
+
+        const User = require('../models/User');
+        const Notification = require('../models/Notification');
+
+        const subject = await Subject.findById(req.params.subjectId).populate('owner', 'username');
+        if (!subject) return res.status(404).json({ message: 'Subject not found' });
+
+        const targetUser = await User.findOne({ username: { $regex: new RegExp(`^${username.trim()}$`, 'i') } });
+        if (!targetUser) return res.status(404).json({ message: 'User not found' });
+
+        if (subject.owner._id.toString() === targetUser._id.toString()) {
+            return res.status(400).json({ message: 'You already own this subject!' });
+        }
+
+        const isCollaborator = subject.collaborators.some(cId => cId.toString() === targetUser._id.toString());
+        if (isCollaborator) {
+            return res.status(400).json({ message: 'User is already a collaborator!' });
+        }
+
+        subject.collaborators.push(targetUser._id);
+        subject.isShared = true;
+        await subject.save();
+
+        // Save persistent notification for targetUser
+        const notification = new Notification({
+            recipient: targetUser._id,
+            sender: subject.owner._id,
+            type: 'task_assigned',
+            content: `${subject.owner.username} shared the subject workspace "${subject.name}" with you!`
+        });
+        await notification.save();
+
+        // Real-time socket emit
+        const io = req.app.get('socketio');
+        const activeUsers = req.app.get('activeUsers');
+        if (io && activeUsers) {
+            const socketId = activeUsers[targetUser._id.toString()];
+            if (socketId) {
+                const populatedNotif = await notification.populate('sender', 'username');
+                io.to(socketId).emit('new_notification', populatedNotif);
+            }
+        }
+
+        const updatedSubject = await Subject.findById(subject._id)
+            .populate('owner', 'username')
+            .populate('collaborators', 'username')
+            .populate('tasks.assignedTo', 'username');
+
+        res.json(updatedSubject);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error sharing subject', error: error.message });
+    }
+});
+
+// @route   PUT /api/subjects/:subjectId/tasks/:taskId/assign
+// @desc    Assign a task to a collaborator
+router.put('/:subjectId/tasks/:taskId/assign', async (req, res) => {
+    try {
+        const { userId } = req.body; // Can be null to unassign
+        const subject = await Subject.findById(req.params.subjectId).populate('owner', 'username');
+        if (!subject) return res.status(404).json({ message: 'Subject not found' });
+
+        const task = subject.tasks.id(req.params.taskId);
+        if (!task) return res.status(404).json({ message: 'Task not found' });
+
+        task.assignedTo = userId || undefined;
+        await subject.save();
+
+        // Create notification if assigned to another user
+        if (userId && userId.toString() !== subject.owner._id.toString()) {
+            const Notification = require('../models/Notification');
+            const notification = new Notification({
+                recipient: userId,
+                sender: subject.owner._id,
+                type: 'task_assigned',
+                content: `${subject.owner.username} assigned you the task "${task.title}" in "${subject.name}"`
+            });
+            await notification.save();
+
+            const io = req.app.get('socketio');
+            const activeUsers = req.app.get('activeUsers');
+            if (io && activeUsers) {
+                const socketId = activeUsers[userId.toString()];
+                if (socketId) {
+                    const populatedNotif = await notification.populate('sender', 'username');
+                    io.to(socketId).emit('new_notification', populatedNotif);
+                }
+            }
+        }
+
+        const updatedSubject = await Subject.findById(subject._id)
+            .populate('owner', 'username')
+            .populate('collaborators', 'username')
+            .populate('tasks.assignedTo', 'username');
+
+        res.json(updatedSubject);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error assigning task', error: error.message });
     }
 });
 

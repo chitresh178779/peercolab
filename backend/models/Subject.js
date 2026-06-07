@@ -10,11 +10,20 @@ const SubjectSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
+    isShared: {
+        type: Boolean,
+        default: false
+    },
+    collaborators: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    }],
     // Nesting the tasks directly inside the subject
     tasks: [{
         title: { type: String, required: true },
         isCompleted: { type: Boolean, default: false },
-        completedAt: { type: Date }
+        completedAt: { type: Date },
+        assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
     }],
     // An array to hold text, markdown, or links for tips
     tips: [{
