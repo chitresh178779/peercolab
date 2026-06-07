@@ -151,23 +151,7 @@ function NotificationBell({ userId, socket }) {
       </button>
 
       {isOpen && (
-        <div 
-          className="glass-card animate-fade-in" 
-          style={{ 
-            position: 'absolute', 
-            top: '115%', 
-            right: 0, 
-            width: '320px', 
-            maxHeight: '400px', 
-            overflowY: 'auto', 
-            zIndex: 9999, 
-            padding: '1rem',
-            boxShadow: 'var(--shadow-glass)',
-            backgroundColor: '#0d111c',
-            border: '2px solid var(--border-light)',
-            borderRadius: '12px'
-          }}
-        >
+        <div className="glass-card animate-fade-in notification-dropdown">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--border-light)', paddingBottom: '0.5rem' }}>
             <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '0.95rem' }}>Notifications</span>
             {unreadCount > 0 && (
