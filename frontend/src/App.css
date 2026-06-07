@@ -890,9 +890,9 @@ form[style*="display: flex"] {
 .self-badge {
   font-size: 0.75rem;
   font-family: var(--font-body);
-  background-color: var(--accent-purple-glow);
-  color: #d8b4fe;
-  border: 1px solid var(--accent-purple);
+  background-color: #000000;
+  color: #ffffff;
+  border: 1px solid #000000;
   padding: 0.15rem 0.65rem;
   border-radius: 12px;
   font-weight: 600;
@@ -1104,10 +1104,10 @@ form[style*="display: flex"] {
 }
 
 .filter-badge.active {
-  background: var(--accent-purple-glow);
-  color: #e9d5ff;
-  border-color: var(--accent-purple);
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.15);
+  background: #000000;
+  color: #ffffff;
+  border-color: #000000;
+  box-shadow: 2px 2px 0px #000000;
 }
 
 /* Ongoing & Completed columns */
@@ -1161,8 +1161,10 @@ form[style*="display: flex"] {
 }
 
 .profile-task-card:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-  background: rgba(15, 23, 42, 0.45);
+  background: #f1f5f9;
+  border-color: #000000;
+  transform: translate(-2px, -2px);
+  box-shadow: 3px 3px 0px #000000;
 }
 
 .dot {
@@ -1253,7 +1255,7 @@ form[style*="display: flex"] {
     padding: 1.25rem;
     max-height: 95vh;
     border-radius: 14px;
-    background: #0b0d16; /* Darker solid color for mobile screens */
+    background: #ffffff; /* Consistent light background for mobile screens */
   }
 
   .profile-header-block {
