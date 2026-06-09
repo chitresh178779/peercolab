@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
-import { Sparkles, LogOut, MessageSquareCode, User, LayoutGrid, Users } from 'lucide-react';
+import { Sparkles, LogOut, MessageSquareCode, User, LayoutGrid, Users, Calendar, Menu, X } from 'lucide-react';
 import { API_BASE_URL } from './config';
 import SubjectWorkspace from './components/SubjectWorkspace';
 import FriendFeed from './components/FriendFeed';
 import FriendManager from './components/FriendManager';
 import Recommendations from './components/Recommendations';
 import UserProfile from './components/UserProfile';
+import ActivityHeatmap from './components/ActivityHeatmap';
 import Auth from './components/Auth';
 import NotificationBell from './components/NotificationBell';
 import TeamChat from './components/TeamChat';
@@ -24,7 +25,8 @@ function App() {
   const [liveAlerts, setLiveAlerts] = useState([]);
   const [recTrigger, setRecTrigger] = useState(0);
   const [activeProfileId, setActiveProfileId] = useState(null);
-  const [currentTab, setCurrentTab] = useState('dashboard');
+  const [currentTab, setCurrentTab] = useState('workspace');
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // Register push notifications when user is active
   useEffect(() => {
@@ -204,93 +206,232 @@ function App() {
   }
 
   return (
-    <div className="app-container">
-      {/* HEADER NAV */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-          <Sparkles className="animate-float" size={28} style={{ color: 'var(--accent-purple)' }} />
-          <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', margin: 0, fontWeight: 800, letterSpacing: '-0.04em', color: 'var(--text-primary)' }}>
-            PeerColab
-          </h1>
+    <div className="app-layout-wrapper">
+      {/* DESKTOP SIDEBAR */}
+      <aside className="desktop-sidebar">
+        <div>
+          <div className="sidebar-logo">
+            <Sparkles className="animate-float" size={26} style={{ color: 'var(--accent-purple)' }} />
+            <h2 className="sidebar-logo-text">PeerColab</h2>
+          </div>
+          
+          <nav className="sidebar-menu">
+            <button 
+              onClick={() => setCurrentTab('workspace')} 
+              className={`sidebar-menu-btn ${currentTab === 'workspace' ? 'active' : ''}`}
+            >
+              <LayoutGrid size={18} />
+              <span>Workspace</span>
+            </button>
+            <button 
+              onClick={() => setCurrentTab('challenges')} 
+              className={`sidebar-menu-btn ${currentTab === 'challenges' ? 'active' : ''}`}
+            >
+              <Sparkles size={18} />
+              <span>Challenges</span>
+            </button>
+            <button 
+              onClick={() => setCurrentTab('chat')} 
+              className={`sidebar-menu-btn ${currentTab === 'chat' ? 'active' : ''}`}
+            >
+              <MessageSquareCode size={18} />
+              <span>Live Chat</span>
+            </button>
+            <button 
+              onClick={() => setCurrentTab('feed')} 
+              className={`sidebar-menu-btn ${currentTab === 'feed' ? 'active' : ''}`}
+            >
+              <Users size={18} />
+              <span>Partners Feed</span>
+            </button>
+            <button 
+              onClick={() => setCurrentTab('partners')} 
+              className={`sidebar-menu-btn ${currentTab === 'partners' ? 'active' : ''}`}
+            >
+              <Users size={18} />
+              <span>Manage Partners</span>
+            </button>
+            <button 
+              onClick={() => setCurrentTab('heatmap')} 
+              className={`sidebar-menu-btn ${currentTab === 'heatmap' ? 'active' : ''}`}
+            >
+              <Calendar size={18} />
+              <span>Activity Heatmap</span>
+            </button>
+            <button 
+              onClick={() => setCurrentTab('profile')} 
+              className={`sidebar-menu-btn ${currentTab === 'profile' ? 'active' : ''}`}
+            >
+              <User size={18} />
+              <span>My Profile</span>
+            </button>
+          </nav>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.95rem', color: 'var(--text-secondary)' }}>
-            Welcome back, <strong style={{ color: 'var(--accent-purple)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setActiveProfileId(user.id)} title="View Profile">{user.username}</strong>!
+
+        <div className="sidebar-footer">
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.75rem', fontWeight: 700 }}>
+            Logged in as @{user.username}
           </span>
-          <NotificationBell userId={user.id} socket={socket} />
-          <button 
-            onClick={() => setActiveProfileId(user.id)} 
-            className="btn-secondary" 
-            style={{ padding: '0.45rem 1rem', fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-          >
-            <User size={14} />
-            <span>My Profile</span>
-          </button>
           <button 
             onClick={handleLogout} 
             className="btn-secondary" 
-            style={{ padding: '0.45rem 1rem', fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+            style={{ width: '100%', fontSize: '0.875rem' }}
           >
             <LogOut size={14} />
             <span>Logout</span>
           </button>
         </div>
+      </aside>
+
+      {/* MOBILE HEADER */}
+      <header className="mobile-header">
+        <button 
+          onClick={() => setMobileSidebarOpen(true)} 
+          className="mobile-hamburger-btn"
+          title="Open Menu"
+        >
+          <Menu size={20} />
+        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Sparkles size={20} style={{ color: 'var(--accent-purple)' }} />
+          <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.25rem' }}>
+            PeerColab
+          </span>
+        </div>
+        <NotificationBell userId={user.id} socket={socket} />
       </header>
 
-      {/* MOTIVATIONAL BANNER */}
-      <div className="quote-banner">
-        <MessageSquareCode size={24} style={{ color: 'var(--accent-purple)', marginBottom: '0.25rem' }} />
-        <h2>"{quote.text}"</h2>
-        {quote.author && <p>- {quote.author}</p>}
-      </div>
+      {/* MOBILE TRANSLUCENT GLASS SIDEBAR OVERLAY */}
+      {mobileSidebarOpen && (
+        <div 
+          className="mobile-sidebar-overlay" 
+          onClick={() => setMobileSidebarOpen(false)}
+        >
+          <div 
+            className="mobile-sidebar-content" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button 
+              className="mobile-sidebar-close" 
+              onClick={() => setMobileSidebarOpen(false)}
+              title="Close Menu"
+            >
+              <X size={16} />
+            </button>
 
-      {/* TABS NAVIGATION */}
-      <nav className="glass-card" style={{ 
-        display: 'flex', 
-        justifyContent: 'space-around', 
-        padding: '0.65rem', 
-        marginBottom: '2rem', 
-        borderRadius: '12px',
-        border: '2px solid var(--border-light)',
-        backgroundColor: 'rgba(15, 23, 42, 0.4)'
-      }}>
-        <button 
-          onClick={() => setCurrentTab('dashboard')} 
-          className={currentTab === 'dashboard' ? 'tab-btn active' : 'tab-btn'}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexGrow: 1, justifyContent: 'center', padding: '0.5rem', borderBottom: currentTab === 'dashboard' ? '2px solid var(--accent-purple)' : 'none' }}
-        >
-          <LayoutGrid size={16} />
-          <span>Workspace</span>
-        </button>
-        <button 
-          onClick={() => setCurrentTab('chat')} 
-          className={currentTab === 'chat' ? 'tab-btn active' : 'tab-btn'}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexGrow: 1, justifyContent: 'center', padding: '0.5rem', borderBottom: currentTab === 'chat' ? '2px solid var(--accent-purple)' : 'none' }}
-        >
-          <MessageSquareCode size={16} />
-          <span>Chat / DMs</span>
-        </button>
-        <button 
-          onClick={() => setCurrentTab('social')} 
-          className={currentTab === 'social' ? 'tab-btn active' : 'tab-btn'}
-          style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexGrow: 1, justifyContent: 'center', padding: '0.5rem', borderBottom: currentTab === 'social' ? '2px solid var(--accent-purple)' : 'none' }}
-        >
-          <Users size={16} />
-          <span>Partners</span>
-        </button>
-      </nav>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '3px solid #000000' }}>
+                <Sparkles size={22} style={{ color: 'var(--accent-purple)' }} />
+                <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.4rem' }}>
+                  PeerColab
+                </span>
+              </div>
 
-      {/* RENDER ACTIVE PAGE */}
-      <main className="animate-fade-in" style={{ minHeight: '60vh' }}>
-        {currentTab === 'dashboard' && (
-          <div className="workspace-column">
-            <Recommendations 
-              userId={user.id} 
-              subjects={subjects} 
-              onAddTask={handleAddTask} 
-              onAddSubject={handleAddSubject}
-              recTrigger={recTrigger}
-            />
+              <nav className="sidebar-menu">
+                <button 
+                  onClick={() => { setCurrentTab('workspace'); setMobileSidebarOpen(false); }} 
+                  className={`sidebar-menu-btn ${currentTab === 'workspace' ? 'active' : ''}`}
+                >
+                  <LayoutGrid size={18} />
+                  <span>Workspace</span>
+                </button>
+                <button 
+                  onClick={() => { setCurrentTab('challenges'); setMobileSidebarOpen(false); }} 
+                  className={`sidebar-menu-btn ${currentTab === 'challenges' ? 'active' : ''}`}
+                >
+                  <Sparkles size={18} />
+                  <span>Challenges</span>
+                </button>
+                <button 
+                  onClick={() => { setCurrentTab('chat'); setMobileSidebarOpen(false); }} 
+                  className={`sidebar-menu-btn ${currentTab === 'chat' ? 'active' : ''}`}
+                >
+                  <MessageSquareCode size={18} />
+                  <span>Live Chat</span>
+                </button>
+                <button 
+                  onClick={() => { setCurrentTab('feed'); setMobileSidebarOpen(false); }} 
+                  className={`sidebar-menu-btn ${currentTab === 'feed' ? 'active' : ''}`}
+                >
+                  <Users size={18} />
+                  <span>Partners Feed</span>
+                </button>
+                <button 
+                  onClick={() => { setCurrentTab('partners'); setMobileSidebarOpen(false); }} 
+                  className={`sidebar-menu-btn ${currentTab === 'partners' ? 'active' : ''}`}
+                >
+                  <Users size={18} />
+                  <span>Manage Partners</span>
+                </button>
+                <button 
+                  onClick={() => { setCurrentTab('heatmap'); setMobileSidebarOpen(false); }} 
+                  className={`sidebar-menu-btn ${currentTab === 'heatmap' ? 'active' : ''}`}
+                >
+                  <Calendar size={18} />
+                  <span>Activity Heatmap</span>
+                </button>
+                <button 
+                  onClick={() => { setCurrentTab('profile'); setMobileSidebarOpen(false); }} 
+                  className={`sidebar-menu-btn ${currentTab === 'profile' ? 'active' : ''}`}
+                >
+                  <User size={18} />
+                  <span>My Profile</span>
+                </button>
+              </nav>
+            </div>
+
+            <div className="sidebar-footer">
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Logged in as @{user.username}
+              </span>
+              <button 
+                onClick={handleLogout} 
+                className="btn-secondary" 
+                style={{ width: '100%', fontSize: '0.875rem' }}
+              >
+                <LogOut size={14} />
+                <span>Logout</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MAIN CONTENT AREA */}
+      <div className="app-content-area">
+        {/* DESKTOP TOP HEADER */}
+        <div className="desktop-top-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+          <div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 800, letterSpacing: '0.05em' }}>PEERCOLAB HUB</span>
+            <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: 800, margin: '0.2rem 0 0 0', letterSpacing: '-0.03em' }}>
+              {currentTab === 'chat' ? 'Live Chat Room' : currentTab === 'feed' ? 'Partners Activity Feed' : currentTab === 'partners' ? 'Manage Study Partners' : currentTab === 'heatmap' ? 'Study & Activity Heatmap' : currentTab === 'profile' ? 'My Portfolio Workspace' : currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}
+            </h1>
+          </div>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+            <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', border: '2.5px solid #000000', borderRadius: '12px', boxShadow: '3px 3px 0px #000000', backgroundColor: '#ffffff' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
+              <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>
+                Welcome, <strong style={{ color: 'var(--accent-purple)' }}>{user.username}</strong>
+              </span>
+            </div>
+            
+            <div style={{ position: 'relative' }}>
+              <NotificationBell userId={user.id} socket={socket} />
+            </div>
+          </div>
+        </div>
+
+        {/* MOTIVATIONAL BANNER */}
+        <div className="quote-banner">
+          <MessageSquareCode size={24} style={{ color: 'var(--accent-purple)', marginBottom: '0.25rem' }} />
+          <h2>"{quote.text}"</h2>
+          {quote.author && <p>- {quote.author}</p>}
+        </div>
+
+        {/* RENDER ACTIVE PAGE */}
+        <main className="animate-fade-in" style={{ minHeight: '60vh' }}>
+          {currentTab === 'workspace' && (
             <SubjectWorkspace 
               subjects={subjects} 
               currentUserId={user.id}
@@ -303,31 +444,58 @@ function App() {
               onShareSubject={handleShareSubject}
               onAssignTask={handleAssignTask}
             />
-          </div>
-        )}
+          )}
 
-        {currentTab === 'chat' && (
-          <div style={{ width: '100%' }}>
-            <TeamChat user={user} socket={socket} />
-          </div>
-        )}
+          {currentTab === 'challenges' && (
+            <Recommendations 
+              userId={user.id} 
+              subjects={subjects} 
+              onAddTask={handleAddTask} 
+              onAddSubject={handleAddSubject}
+              recTrigger={recTrigger}
+            />
+          )}
 
-        {currentTab === 'social' && (
-          <div className="dashboard-grid">
+          {currentTab === 'chat' && (
+            <div style={{ width: '100%' }}>
+              <TeamChat user={user} socket={socket} />
+            </div>
+          )}
+
+          {currentTab === 'feed' && (
             <FriendFeed liveAlerts={liveAlerts} onViewProfile={setActiveProfileId} />
-            <FriendManager userId={user.id} onViewProfile={setActiveProfileId} /> 
-          </div>
-        )}
-      </main>
+          )}
 
-      {/* USER PROFILE MODAL */}
-      {activeProfileId && (
+          {currentTab === 'partners' && (
+            <FriendManager userId={user.id} onViewProfile={setActiveProfileId} /> 
+          )}
+
+          {currentTab === 'heatmap' && (
+            <ActivityHeatmap subjects={subjects} />
+          )}
+
+          {currentTab === 'profile' && (
+            <UserProfile 
+              userId={user.id} 
+              profileId={user.id} 
+              onClose={() => {}} 
+              currentUsername={user.username}
+              isSelf={true}
+              inline={true}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* USER PROFILE MODAL (for viewing other partners' profiles on click) */}
+      {activeProfileId && activeProfileId !== user.id && (
         <UserProfile 
           userId={user.id} 
           profileId={activeProfileId} 
           onClose={() => setActiveProfileId(null)}
           currentUsername={user.username}
-          isSelf={activeProfileId === user.id}
+          isSelf={false}
+          inline={false}
         />
       )}
     </div>

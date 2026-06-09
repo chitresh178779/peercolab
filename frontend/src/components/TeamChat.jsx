@@ -1,34 +1,88 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-import { Send, MessageSquareCode, Users, ChevronLeft, MessageSquare, Trash2 } from 'lucide-react';
+import {
+  Send, Users, ChevronLeft, MessageSquare, Trash2, Search,
+  MoreVertical, Smile, Check, CheckCheck, Phone, Video, Info
+} from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
 function TeamChat({ user, socket }) {
   const [friends, setFriends] = useState([]);
+  const [filteredFriends, setFilteredFriends] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [isPeerTyping, setIsPeerTyping] = useState(false);
   const [deleteMessageId, setDeleteMessageId] = useState(null);
+  const [lastMessages, setLastMessages] = useState({});
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+
+  // Colors for avatars
+  const avatarColors = [
+    'var(--accent-purple-glow)',
+    'var(--accent-emerald-glow)',
+    'var(--accent-amber-glow)',
+    'var(--accent-blue-glow)',
+    '#FFE4E6', // rose
+    '#EDE9FE', // violet
+  ];
+
+  const getAvatarBg = (username) => {
+    if (!username) return avatarColors[0];
+    const code = username.charCodeAt(0) + (username.charCodeAt(username.length - 1) || 0);
+    return avatarColors[code % avatarColors.length];
+  };
 
   // Fetch friends list on mount
   useEffect(() => {
     axios.get(`${API_BASE_URL}/api/users/${user.id}/friends`)
-      .then(res => setFriends(res.data))
+      .then(res => {
+        const validFriends = (res.data || []).filter(friend => friend && friend._id && friend.username);
+        setFriends(validFriends);
+        setFilteredFriends(validFriends);
+
+        // Fetch last message for each friend to populate sidebar
+        validFriends.forEach(friend => {
+          axios.get(`${API_BASE_URL}/api/chat/history/${user.id}/${friend._id}`)
+            .then(historyRes => {
+              if (historyRes.data && historyRes.data.length > 0) {
+                setLastMessages(prev => ({
+                  ...prev,
+                  [friend._id]: historyRes.data[historyRes.data.length - 1]
+                }));
+              }
+            })
+            .catch(err => console.error('Error fetching last message history:', err));
+        });
+      })
       .catch(err => console.error('Error fetching friends list:', err));
   }, [user.id]);
+
+  // Filter friends list based on search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredFriends(friends);
+    } else {
+      const filtered = friends.filter(f =>
+        f && f.username && f.username.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredFriends(filtered);
+    }
+  }, [searchQuery, friends]);
 
   // Load chat history when selectedFriend changes
   useEffect(() => {
     setIsPeerTyping(false);
     setDeleteMessageId(null);
+    setShowEmojiPicker(false);
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
-    
+
     if (!selectedFriend) {
       setMessages([]);
       return;
@@ -39,6 +93,12 @@ function TeamChat({ user, socket }) {
       .then(res => {
         setMessages(res.data);
         setLoading(false);
+        if (res.data.length > 0) {
+          setLastMessages(prev => ({
+            ...prev,
+            [selectedFriend._id]: res.data[res.data.length - 1]
+          }));
+        }
         setTimeout(scrollToBottom, 50);
       })
       .catch(err => {
@@ -52,12 +112,23 @@ function TeamChat({ user, socket }) {
     if (!socket) return;
 
     const handleReceiveDirectMessage = (msg) => {
+      const senderId = msg.sender._id || msg.sender;
+      const recipientId = msg.recipient._id || msg.recipient;
+
+      // Identify which friend this chat belongs to
+      const partnerId = senderId === user.id ? recipientId : senderId;
+
+      // Update last message in sidebar
+      setLastMessages(prev => ({
+        ...prev,
+        [partnerId]: msg
+      }));
+
+      // Append message if active chat matches
       if (selectedFriend) {
-        const isCurrentChat = 
-          (msg.sender._id === selectedFriend._id && msg.recipient._id === user.id) ||
-          (msg.sender._id === user.id && msg.recipient._id === selectedFriend._id) ||
-          (msg.sender === selectedFriend._id && msg.recipient === user.id) ||
-          (msg.sender === user.id && msg.recipient === selectedFriend._id);
+        const isCurrentChat =
+          (senderId === selectedFriend._id && recipientId === user.id) ||
+          (senderId === user.id && recipientId === selectedFriend._id);
 
         if (isCurrentChat) {
           setMessages(prev => [...prev, msg]);
@@ -119,7 +190,7 @@ function TeamChat({ user, socket }) {
   };
 
   const handleSend = (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     if (!inputText.trim() || !selectedFriend) return;
 
     if (socket) {
@@ -128,6 +199,21 @@ function TeamChat({ user, socket }) {
         recipientId: selectedFriend._id,
         content: inputText.trim()
       });
+
+      // Construct a temporary message object to update the sidebar instantly
+      const tempMsg = {
+        _id: 'temp-' + Date.now(),
+        sender: user.id,
+        recipient: selectedFriend._id,
+        content: inputText.trim(),
+        createdAt: new Date().toISOString()
+      };
+
+      setLastMessages(prev => ({
+        ...prev,
+        [selectedFriend._id]: tempMsg
+      }));
+
       setInputText('');
 
       if (typingTimeoutRef.current) {
@@ -161,9 +247,46 @@ function TeamChat({ user, socket }) {
     }
   };
 
+  const formatMessageTime = (isoString) => {
+    if (!isoString) return '';
+    return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const formatLastMsgDate = (isoString) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const today = new Date();
+    if (date.toDateString() === today.toDateString()) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+      return 'Yesterday';
+    }
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  };
+
+  const appendEmoji = (emoji) => {
+    setInputText(prev => prev + emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const mockEmojis = ['😊', '😂', '👍', '🔥', '📚', '💡', '✅', '🎓', '🎯', '🚀', '⭐', '❤️'];
+
   return (
-    <div className="feed-pane team-chat-pane" style={{ display: 'flex', height: '520px', padding: 0, overflow: 'hidden' }}>
-      
+    <div
+      className="glass-card"
+      style={{
+        display: 'flex',
+        height: '650px',
+        padding: 0,
+        overflow: 'hidden',
+        border: '3px solid #000000',
+        boxShadow: '8px 8px 0px #000000',
+        backgroundColor: '#ffffff'
+      }}
+    >
       <style>{`
         @keyframes bounce-dot {
           0%, 80%, 100% { transform: scale(0.3); opacity: 0.5; }
@@ -172,66 +295,278 @@ function TeamChat({ user, socket }) {
         .dot-bounce {
           animation: bounce-dot 1.4s infinite ease-in-out both;
         }
-        .msg-delete-btn {
+        .whatsapp-bubble {
+          position: relative;
+          max-width: 65%;
+          padding: 0.5rem 0.75rem 0.4rem 0.75rem;
+          border: 2px solid #000000;
+          border-radius: 12px;
+          margin-bottom: 2px;
+          font-size: 0.9rem;
+          line-height: 1.45;
+          box-shadow: 2px 2px 0px #000000;
+          word-break: break-word;
+          font-weight: 600;
+        }
+        .bubble-me {
+          align-self: flex-end;
+          background-color: #dcfce7; /* Light green/emerald tint */
+          border-top-right-radius: 2px;
+        }
+        .bubble-other {
+          align-self: flex-start;
+          background-color: #ffffff; /* White background */
+          border-top-left-radius: 2px;
+        }
+        .bubble-meta {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 3px;
+          font-size: 0.65rem;
+          color: var(--text-muted);
+          margin-top: 0.2rem;
+          text-align: right;
+        }
+        .chat-sidebar-container {
+          width: 35%;
+          border-right: 3px solid #000000;
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          background-color: #ffffff;
+        }
+        .chat-window-container {
+          width: 65%;
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          background-color: #faf8f5;
+        }
+        .chat-item-hover:hover {
+          background-color: #f5f5f4 !important;
+        }
+        .chat-wallpaper-grid {
+          background-color: #faf8f5;
+          background-image: radial-gradient(#000000 1px, transparent 0);
+          background-size: 20px 20px;
+          background-opacity: 0.15;
+        }
+        .msg-actions-btn {
           opacity: 0;
           transition: opacity 0.2s ease;
+          position: absolute;
+          top: 4px;
+          right: 4px;
+          background: rgba(255,255,255,0.9);
+          border: 1.5px solid #000000;
+          border-radius: 4px;
+          padding: 2px;
+          cursor: pointer;
         }
-        .msg-container:hover .msg-delete-btn {
-          opacity: 0.6;
+        .whatsapp-bubble:hover .msg-actions-btn {
+          opacity: 1;
         }
-        .msg-delete-btn:hover {
-          opacity: 1 !important;
-          color: var(--accent-rose) !important;
+        .chat-input-form {
+          display: flex !important;
+          flex-direction: row !important;
+          align-items: center !important;
+          gap: 0.65rem !important;
+          flex-grow: 1 !important;
+          min-width: 0 !important;
+          width: 100% !important;
+        }
+        .chat-input-form button {
+          width: auto !important;
+          margin-top: 0 !important;
+          flex-shrink: 0 !important;
+        }
+        @media (max-width: 768px) {
+          .chat-sidebar-container.mobile-hide {
+            display: none !important;
+          }
+          .chat-sidebar-container.mobile-show {
+            display: flex !important;
+          }
+          .chat-window-container.mobile-hide {
+            display: none !important;
+          }
+          .chat-window-container.mobile-show {
+            display: flex !important;
+          }
+          .chat-sidebar-container {
+            width: 100% !important;
+            border-right: none;
+          }
+          .chat-window-container {
+            width: 100% !important;
+          }
         }
       `}</style>
 
-      {/* FRIENDS DIRECTORY COLUMN */}
-      <div 
-        style={{ 
-          width: selectedFriend ? '30%' : '100%', 
-          borderRight: '2.5px solid #000000',
-          display: !selectedFriend ? 'flex' : 'none',
-          flexDirection: 'column',
-          height: '100%',
-          backgroundColor: '#faf8f5'
-        }}
-        className="chat-sidebar-desktop"
-      >
-        <div style={{ padding: '1rem', borderBottom: '2.5px solid #000000', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <Users size={18} style={{ color: '#000000' }} />
-          <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '1rem', color: '#000000' }}>Study Partners</span>
+      {/* WHATSAPP SIDEBAR: CHATS LIST */}
+      <div className={`chat-sidebar-container ${selectedFriend ? 'mobile-hide' : 'mobile-show'}`}>
+
+        {/* Sidebar Header */}
+        <div style={{
+          padding: '1rem',
+          backgroundColor: '#f5f5f4',
+          borderBottom: '3px solid #000000',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexShrink: 0
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '50%',
+              backgroundColor: getAvatarBg(user.username),
+              border: '2px solid #000000',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontFamily: 'var(--font-heading)',
+              fontWeight: 800,
+              fontSize: '1.1rem',
+              boxShadow: '1.5px 1.5px 0px #000000'
+            }}>
+              {user.username.charAt(0).toUpperCase()}
+            </div>
+            <span style={{ fontWeight: 800, fontSize: '0.95rem' }}>@{user.username}</span>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }} title="Study Partners">
+              <Users size={20} />
+            </button>
+            <button style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }} title="Menu">
+              <MoreVertical size={20} />
+            </button>
+          </div>
         </div>
-        <div style={{ flexGrow: 1, overflowY: 'auto', padding: '0.5rem' }}>
-          {friends.length === 0 ? (
-            <p style={{ fontSize: '0.825rem', color: '#000000', textAlign: 'center', marginTop: '2rem', fontStyle: 'italic' }}>
-              No study partners added yet. Go to Partners page to add friends!
-            </p>
+
+        {/* Sidebar Search Bar */}
+        <div style={{
+          padding: '0.65rem 1rem',
+          borderBottom: '2px solid #000000',
+          backgroundColor: '#ffffff',
+          flexShrink: 0
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            backgroundColor: '#f5f5f4',
+            border: '2px solid #000000',
+            borderRadius: '10px',
+            padding: '0.35rem 0.65rem'
+          }}>
+            <Search size={16} style={{ color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              placeholder="Search study partner..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                border: 'none',
+                background: 'none',
+                outline: 'none',
+                fontSize: '0.825rem',
+                width: '100%',
+                fontWeight: 600,
+                color: '#000000'
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Sidebar Chat List */}
+        <div style={{ flexGrow: 1, overflowY: 'auto', backgroundColor: '#ffffff' }}>
+          {filteredFriends.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '2.5rem 1.5rem', color: 'var(--text-secondary)' }}>
+              <MessageSquare size={32} style={{ opacity: 0.25, marginBottom: '0.5rem' }} />
+              <p style={{ fontSize: '0.85rem', fontWeight: 600 }}>No partners found.</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+                Go to "Manage Partners" to link up with active classmates!
+              </p>
+            </div>
           ) : (
-            friends.map(friend => {
+            filteredFriends.map(friend => {
               const isSelected = selectedFriend?._id === friend._id;
+              const lastMsg = lastMessages[friend._id];
+
               return (
-                <div 
+                <div
                   key={friend._id}
                   onClick={() => setSelectedFriend(friend)}
+                  className="chat-item-hover"
                   style={{
-                    padding: '0.75rem 1rem',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    marginBottom: '0.4rem',
-                    transition: 'var(--transition-fast)',
-                    backgroundColor: isSelected ? '#000000' : 'transparent',
-                    border: '2px solid',
-                    borderColor: isSelected ? '#000000' : 'transparent',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.65rem'
+                    gap: '0.75rem',
+                    padding: '0.85rem 1rem',
+                    cursor: 'pointer',
+                    borderBottom: '1px solid #e5e7eb',
+                    backgroundColor: isSelected ? 'rgba(124, 58, 237, 0.08)' : 'transparent',
+                    borderLeft: isSelected ? '4px solid var(--accent-purple)' : '4px solid transparent',
+                    transition: 'background-color 0.1s ease'
                   }}
-                  className="chat-friend-item"
                 >
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: isSelected ? '#ffffff' : '#000000' }} />
-                  <span style={{ fontSize: '0.9rem', fontWeight: 700, color: isSelected ? '#ffffff' : '#000000' }}>
-                    {friend.username}
-                  </span>
+                  {/* Friend Avatar */}
+                  <div style={{
+                    width: '46px',
+                    height: '46px',
+                    borderRadius: '50%',
+                    backgroundColor: getAvatarBg(friend.username),
+                    border: '2px solid #000000',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontFamily: 'var(--font-heading)',
+                    fontWeight: 800,
+                    fontSize: '1.15rem',
+                    boxShadow: '1.5px 1.5px 0px #000000',
+                    flexShrink: 0
+                  }}>
+                    {friend.username.charAt(0).toUpperCase()}
+                  </div>
+
+                  {/* Message details */}
+                  <div style={{ flexGrow: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.15rem' }}>
+                      <span style={{ fontWeight: 800, fontSize: '0.925rem', color: '#000000', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {friend.username}
+                      </span>
+                      {lastMsg && (
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                          {formatLastMsgDate(lastMsg.createdAt)}
+                        </span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      {lastMsg && (lastMsg.sender?._id === user.id || lastMsg.sender === user.id) && (
+                        <CheckCheck size={14} style={{ color: 'var(--accent-blue)', flexShrink: 0 }} />
+                      )}
+                      <span style={{
+                        fontSize: '0.8rem',
+                        color: 'var(--text-muted)',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: 'block',
+                        fontWeight: 500
+                      }}>
+                        {lastMsg ? (
+                          lastMsg.isDeletedForEveryone ? '🚫 Message deleted' : lastMsg.content
+                        ) : (
+                          <span style={{ fontStyle: 'italic', opacity: 0.7 }}>Click to start chat</span>
+                        )}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               );
             })
@@ -239,234 +574,211 @@ function TeamChat({ user, socket }) {
         </div>
       </div>
 
-      {/* CHAT MESSAGING COLUMN */}
-      <div 
-        style={{ 
-          width: '100%', 
-          display: selectedFriend ? 'flex' : 'none',
-          flexDirection: 'column',
-          height: '100%',
-          padding: '1rem'
-        }}
-        className="chat-window-desktop"
-      >
+      {/* WHATSAPP CHAT WINDOW */}
+      <div className={`chat-window-container chat-wallpaper-grid ${selectedFriend ? 'mobile-show' : 'mobile-hide'}`}>
         {selectedFriend ? (
           <>
-            {/* Chat Header */}
-            <div 
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.75rem', 
-                borderBottom: '1px solid var(--border-light)', 
-                paddingBottom: '0.75rem', 
-                marginBottom: '0.75rem',
-                flexShrink: 0
-              }}
-            >
-              <button 
-                onClick={() => setSelectedFriend(null)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--text-secondary)',
-                  cursor: 'pointer',
+            {/* Chat Window Header */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '0.65rem 1rem',
+              backgroundColor: '#f5f5f4',
+              borderBottom: '3px solid #000000',
+              flexShrink: 0,
+              zIndex: 10
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                {/* Mobile Back Chevron */}
+                <button
+                  onClick={() => setSelectedFriend(null)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#000000',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '4px',
+                    borderRadius: '6px'
+                  }}
+                  className="chat-back-btn"
+                  title="Back to Chats"
+                >
+                  <ChevronLeft size={22} style={{ strokeWidth: 2.5 }} />
+                </button>
+
+                {/* Friend Active Avatar */}
+                <div style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '50%',
+                  backgroundColor: getAvatarBg(selectedFriend.username),
+                  border: '2px solid #000000',
                   display: 'flex',
                   alignItems: 'center',
-                  padding: '4px',
-                  borderRadius: '6px',
-                  transition: 'var(--transition-fast)'
-                }}
-                title="Back to partner list"
-              >
-                <ChevronLeft size={20} />
-              </button>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ fontFamily: 'var(--font-heading)', fontWeight: 700, fontSize: '1.05rem', color: '#000000' }}>
-                  {selectedFriend.username}
-                </span>
-                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Private Conversation</span>
+                  justifyContent: 'center',
+                  fontFamily: 'var(--font-heading)',
+                  fontWeight: 800,
+                  fontSize: '1.1rem',
+                  boxShadow: '1.5px 1.5px 0px #000000'
+                }}>
+                  {selectedFriend.username.charAt(0).toUpperCase()}
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontWeight: 800, fontSize: '0.975rem', color: '#000000' }}>
+                    {selectedFriend.username}
+                  </span>
+                  <span style={{ fontSize: '0.7rem', color: isPeerTyping ? 'var(--accent-emerald)' : 'var(--text-secondary)', fontWeight: isPeerTyping ? 700 : 600 }}>
+                    {isPeerTyping ? 'typing...' : 'Active Study Session'}
+                  </span>
+                </div>
               </div>
+
+              {/* Call/Video Call icons */}
+
             </div>
 
-            {/* Chat Body */}
-            <div 
-              style={{ 
-                flexGrow: 1, 
-                overflowY: 'auto', 
-                paddingRight: '4px',
+            {/* Chat Messages Body */}
+            <div
+              style={{
+                flexGrow: 1,
+                overflowY: 'auto',
+                padding: '1.5rem',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '0.75rem',
-                marginBottom: '0.5rem'
+                gap: '0.5rem',
+                scrollbarWidth: 'thin'
               }}
             >
               {loading ? (
-                <p style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem', margin: 'auto' }}>Loading chat history...</p>
+                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                  <div className="spinner"></div>
+                </div>
               ) : messages.length === 0 ? (
-                <div style={{ margin: 'auto', textAlign: 'center', color: 'var(--text-muted)' }}>
-                  <MessageSquare size={28} style={{ opacity: 0.3, marginBottom: '0.5rem' }} />
-                  <p style={{ fontSize: '0.825rem', fontStyle: 'italic' }}>No messages yet. Send a message to start!</p>
+                <div style={{
+                  margin: 'auto',
+                  backgroundColor: '#ffffff',
+                  border: '2px solid #000000',
+                  boxShadow: '3px 3px 0px #000000',
+                  padding: '1rem 1.5rem',
+                  borderRadius: '12px',
+                  textAlign: 'center',
+                  maxWidth: '300px'
+                }}>
+                  <MessageSquare size={32} style={{ color: 'var(--accent-purple)', marginBottom: '0.5rem' }} />
+                  <p style={{ fontSize: '0.85rem', fontWeight: 700 }}>No messages yet</p>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                    Send a direct note to start collaborating on tasks!
+                  </p>
                 </div>
               ) : (
                 messages.map((msg, index) => {
                   const isMe = msg.sender?._id === user.id || msg.sender === user.id;
-                  
+
                   return (
-                    <div 
-                      key={msg._id || index} 
-                      style={{ 
+                    <div
+                      key={msg._id || index}
+                      style={{
                         alignSelf: isMe ? 'flex-end' : 'flex-start',
-                        maxWidth: '80%',
                         display: 'flex',
                         flexDirection: 'column',
-                        alignItems: isMe ? 'flex-end' : 'flex-start'
+                        width: '100%'
                       }}
-                      className="animate-fade-in msg-container"
+                      className="animate-fade-in"
                     >
-                      {msg.isDeletedForEveryone ? (
-                        <div 
-                          style={{ 
-                            padding: '0.65rem 0.95rem', 
-                            borderRadius: '12px', 
-                            borderTopRightRadius: isMe ? '2px' : '12px',
-                            borderTopLeftRadius: isMe ? '12px' : '2px',
-                            backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                            border: '1px dashed var(--border-light)',
-                            color: 'var(--text-muted)',
-                            fontSize: '0.825rem',
-                            fontStyle: 'italic',
-                            lineHeight: 1.4,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.35rem'
-                          }}
-                        >
-                          <span style={{ fontSize: '0.9rem' }}>🚫</span>
-                          <span>This message was deleted</span>
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexDirection: isMe ? 'row-reverse' : 'row' }}>
-                          <div 
-                            style={{ 
-                              padding: '0.65rem 0.95rem', 
-                              borderRadius: '12px', 
-                              borderTopRightRadius: isMe ? '2px' : '12px',
-                              borderTopLeftRadius: isMe ? '12px' : '2px',
-                              backgroundColor: isMe ? '#ffffff' : '#f5f5f4',
-                              border: '2px solid #000000',
-                              color: '#000000',
-                              fontSize: '0.875rem',
-                              lineHeight: 1.4,
-                              wordBreak: 'break-word',
-                              boxShadow: '2.5px 2.5px 0px #000000',
-                              fontWeight: 700
-                            }}
+                      <div className={`whatsapp-bubble ${isMe ? 'bubble-me' : 'bubble-other'}`}>
+                        {/* Delete message trigger */}
+                        {msg._id && !msg.isDeletedForEveryone && (
+                          <button
+                            className="msg-actions-btn"
+                            onClick={() => setDeleteMessageId(msg._id)}
+                            title="Message Actions"
                           >
-                            {msg.content}
-                          </div>
-                          {msg._id && (
-                            <button
-                              onClick={() => setDeleteMessageId(msg._id)}
-                              style={{
-                                background: 'none',
-                                border: 'none',
-                                color: 'var(--text-muted)',
-                                cursor: 'pointer',
-                                padding: '2px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                borderRadius: '4px',
-                                outline: 'none'
-                              }}
-                              className="msg-delete-btn"
-                              title="Delete Message"
-                            >
-                              <Trash2 size={12} />
-                            </button>
+                            <Trash2 size={12} />
+                          </button>
+                        )}
+
+                        {msg.isDeletedForEveryone ? (
+                          <span style={{ fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '0.825rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            🚫 This message was deleted
+                          </span>
+                        ) : (
+                          <span>{msg.content}</span>
+                        )}
+
+                        <div className="bubble-meta">
+                          <span>{formatMessageTime(msg.createdAt)}</span>
+                          {isMe && !msg.isDeletedForEveryone && (
+                            <CheckCheck size={14} style={{ color: 'var(--accent-blue)', marginLeft: '2px' }} />
                           )}
                         </div>
-                      )}
+                      </div>
 
                       {/* Deletion Dialog Popup */}
                       {deleteMessageId === msg._id && (
-                        <div 
-                          style={{ 
-                            backgroundColor: '#1e293b', 
-                            border: '1.5px solid var(--border-light)', 
-                            padding: '0.65rem', 
-                            borderRadius: '8px', 
-                            marginTop: '0.35rem', 
-                            display: 'flex', 
-                            flexDirection: 'column', 
+                        <div
+                          style={{
+                            alignSelf: isMe ? 'flex-end' : 'flex-start',
+                            backgroundColor: '#ffffff',
+                            border: '2px solid #000000',
+                            boxShadow: '3px 3px 0px #000000',
+                            padding: '0.75rem',
+                            borderRadius: '10px',
+                            marginTop: '0.35rem',
+                            display: 'flex',
+                            flexDirection: 'column',
                             gap: '0.5rem',
-                            alignItems: isMe ? 'flex-end' : 'flex-start',
-                            zIndex: 10,
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
+                            maxWidth: '280px',
+                            zIndex: 10
                           }}
-                          className="animate-fade-in"
                         >
-                          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)' }}>Delete message?</span>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#000000' }}>Delete message?</span>
                           <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                            <button 
+                            <button
                               type="button"
                               onClick={() => handleDeleteForMe(msg._id)}
-                              className="btn-secondary" 
-                              style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem', border: '1px solid var(--border-light)' }}
+                              className="btn-secondary"
+                              style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem', border: '1.5px solid #000000', borderRadius: '4px' }}
                             >
                               Delete for me
                             </button>
                             {isMe && (
-                              <button 
+                              <button
                                 type="button"
                                 onClick={() => handleDeleteForEveryone(msg._id)}
-                                className="btn-primary" 
-                                style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem', backgroundColor: 'var(--accent-rose)', borderColor: 'var(--accent-rose)' }}
+                                className="btn-primary"
+                                style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem', backgroundColor: 'var(--accent-rose)', color: '#ffffff', border: '1.5px solid #000000', borderRadius: '4px' }}
                               >
                                 Delete for everyone
                               </button>
                             )}
-                            <button 
+                            <button
                               type="button"
                               onClick={() => setDeleteMessageId(null)}
-                              className="btn-secondary" 
-                              style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem', border: '1px solid var(--border-light)' }}
+                              className="btn-secondary"
+                              style={{ padding: '0.2rem 0.5rem', fontSize: '0.7rem', border: '1.5px solid #000000', borderRadius: '4px' }}
                             >
                               Cancel
                             </button>
                           </div>
                         </div>
                       )}
-
-                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '2px', padding: '0 4px' }}>
-                        {new Date(msg.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
                     </div>
                   );
                 })
               )}
 
-              {/* WhatsApp Bouncing Dots Typing Indicator */}
+              {/* Typing indicator */}
               {isPeerTyping && (
-                <div 
-                  style={{ 
-                    alignSelf: 'flex-start',
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: '0.45rem', 
-                    padding: '0.5rem 0.75rem',
-                    borderRadius: '12px',
-                    borderTopLeftRadius: '2px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                    border: '1px solid var(--border-light)',
-                    marginTop: '0.25rem'
-                  }}
-                  className="animate-fade-in"
+                <div
+                  className="whatsapp-bubble bubble-other"
+                  style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
                 >
-                  <span style={{ fontSize: '0.775rem', color: 'var(--text-muted)', fontWeight: 500 }}>
-                    typing
-                  </span>
-                  <div style={{ display: 'flex', gap: '3px', alignItems: 'center', height: '100%', marginTop: '2px' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600 }}>typing</span>
+                  <div style={{ display: 'flex', gap: '2px', alignItems: 'center' }}>
                     <span className="dot-bounce" style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--accent-purple)', display: 'inline-block' }} />
                     <span className="dot-bounce" style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--accent-purple)', display: 'inline-block', animationDelay: '0.2s' }} />
                     <span className="dot-bounce" style={{ width: '4px', height: '4px', borderRadius: '50%', backgroundColor: 'var(--accent-purple)', display: 'inline-block', animationDelay: '0.4s' }} />
@@ -477,30 +789,154 @@ function TeamChat({ user, socket }) {
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Chat Input */}
-            <form onSubmit={handleSend} style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
-              <input 
-                type="text" 
-                placeholder={`Message ${selectedFriend.username}...`} 
-                value={inputText}
-                onChange={handleInputChange}
-                className="form-input-small"
-                style={{ fontSize: '0.875rem', padding: '0.65rem 1rem' }}
-              />
-              <button 
-                type="submit" 
-                className="btn-primary" 
-                style={{ padding: '0.65rem 1.1rem', borderRadius: '10px', flexShrink: 0 }}
+            {/* Attachments / Emoji Picker Popups */}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              {showEmojiPicker && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  left: '10px',
+                  backgroundColor: '#ffffff',
+                  border: '2px solid #000000',
+                  borderRadius: '10px',
+                  boxShadow: '3px -3px 0px #000000',
+                  padding: '0.5rem',
+                  display: 'flex',
+                  gap: '0.5rem',
+                  zIndex: 20
+                }}>
+                  {mockEmojis.map(e => (
+                    <button
+                      key={e}
+                      type="button"
+                      onClick={() => appendEmoji(e)}
+                      style={{ background: 'none', border: 'none', fontSize: '1.25rem', cursor: 'pointer', padding: '4px' }}
+                    >
+                      {e}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Chat Footer Input Area */}
+            <div style={{
+              padding: '0.85rem 1rem',
+              backgroundColor: '#f5f5f4',
+              borderTop: '3px solid #000000',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.65rem',
+              flexShrink: 0
+            }}>
+              {/* Chat Input form */}
+              <form
+                onSubmit={handleSend}
+                className="chat-input-form"
               >
-                <Send size={14} />
-                <span>Send</span>
-              </button>
-            </form>
+                {/* Emoji Trigger */}
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    opacity: 0.8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}
+                  title="Add Emoji"
+                >
+                  <Smile size={20} />
+                </button>
+
+                <input
+                  type="text"
+                  placeholder={`Message ${selectedFriend.username}...`}
+                  value={inputText}
+                  onChange={handleInputChange}
+                  style={{
+                    flexGrow: 1,
+                    minWidth: 0,
+                    border: '2.5px solid #000000',
+                    borderRadius: '12px',
+                    padding: '0.65rem 1rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    outline: 'none',
+                    backgroundColor: '#ffffff',
+                    fontFamily: 'inherit'
+                  }}
+                />
+
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={!inputText.trim()}
+                  style={{
+                    padding: '0.65rem',
+                    borderRadius: '50%',
+                    width: '40px',
+                    height: '40px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    backgroundColor: inputText.trim() ? 'var(--accent-purple)' : '#e5e7eb',
+                    color: inputText.trim() ? '#ffffff' : '#9ca3af',
+                    border: '2px solid #000000',
+                    boxShadow: inputText.trim() ? '1.5px 1.5px 0px #000000' : 'none',
+                    cursor: inputText.trim() ? 'pointer' : 'not-allowed',
+                    transition: 'var(--transition-fast)'
+                  }}
+                >
+                  <Send size={16} />
+                </button>
+              </form>
+            </div>
           </>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-muted)' }}>
-            <MessageSquareCode size={48} style={{ opacity: 0.25, marginBottom: '0.75rem' }} />
-            <span style={{ fontSize: '0.9rem', fontStyle: 'italic' }}>Select a study partner from the left menu to chat privately.</span>
+          /* Empty Chat Screen */
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            padding: '2rem',
+            textAlign: 'center'
+          }}>
+            <div style={{
+              backgroundColor: '#ffffff',
+              border: '3px solid #000000',
+              borderRadius: '20px',
+              padding: '2.5rem',
+              maxWidth: '400px',
+              boxShadow: '6px 6px 0px #000000'
+            }}>
+              <MessageSquare size={64} style={{ color: 'var(--accent-purple)', marginBottom: '1rem', strokeWidth: 1.5 }} />
+              <h3 style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: '1.5rem', marginBottom: '0.5rem' }}>
+                PeerColab Messenger
+              </h3>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600, lineHeight: 1.5 }}>
+                Select a study partner from the left menu to start a real-time message stream.
+              </p>
+              <div style={{
+                marginTop: '1.5rem',
+                padding: '0.5rem',
+                border: '1.5px dashed #000000',
+                borderRadius: '8px',
+                fontSize: '0.75rem',
+                color: 'var(--text-muted)',
+                fontWeight: 600
+              }}>
+                🔒 Private sessions are end-to-end coordinated
+              </div>
+            </div>
           </div>
         )}
       </div>

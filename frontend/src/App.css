@@ -1383,3 +1383,256 @@ form[style*="display: flex"] {
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   }
 }
+
+/* Sidebar Layout for Desktop/Laptop */
+.app-layout-wrapper {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.desktop-sidebar {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 280px;
+  background-color: var(--bg-card);
+  border-right: 3px solid #000000;
+  padding: 2rem 1.5rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  box-shadow: 4px 0px 0px #000000;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 3px solid #000000;
+}
+
+.sidebar-logo-text {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.sidebar-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-grow: 1;
+}
+
+.sidebar-menu-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: none;
+  border: 2px dashed transparent;
+  border-radius: 10px;
+  color: var(--text-muted);
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition-fast);
+}
+
+.sidebar-menu-btn:hover {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  border-color: #000000;
+}
+
+.sidebar-menu-btn.active {
+  background-color: #ffffff;
+  color: #000000;
+  border: 2.5px solid #000000;
+  box-shadow: 3px 3px 0px #000000;
+  transform: translate(-2px, -2px);
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 1.5rem;
+  border-top: 2px solid #000000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Main Content Area */
+.app-content-area {
+  flex-grow: 1;
+  min-width: 0;
+  padding: 2.5rem 3rem;
+  max-width: 1200px;
+  width: 100%;
+}
+
+/* Mobile Header / Navigation */
+.mobile-header {
+  display: none; /* hidden on desktop */
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--bg-card);
+  border-bottom: 3px solid #000000;
+  padding: 1rem 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  width: 100%;
+}
+
+.mobile-hamburger-btn {
+  background: none;
+  border: 2.5px solid #000000;
+  border-radius: 8px;
+  padding: 0.4rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 2px 2px 0px #000000;
+  background-color: #ffffff;
+}
+
+.mobile-hamburger-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #000000;
+}
+
+/* Mobile Glass Overlay Sidebar */
+.mobile-sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(250, 248, 245, 0.45); /* translucent warm background */
+  backdrop-filter: blur(25px); /* glassmorphism */
+  -webkit-backdrop-filter: blur(25px);
+  z-index: 1000;
+  display: flex;
+  justify-content: flex-start;
+  animation: fadeInOverlay 0.3s ease-out;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.mobile-sidebar-content {
+  width: 80%;
+  max-width: 320px;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.85); /* semi-transparent glass panel */
+  border-right: 3px solid #000000;
+  padding: 2.5rem 1.75rem 2rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 10px 0px 30px rgba(0, 0, 0, 0.15);
+  animation: slideInSidebar 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+@keyframes slideInSidebar {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.mobile-sidebar-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: none;
+  border: 2px solid #000000;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 1.5px 1.5px 0px #000000;
+  background-color: #ffffff;
+}
+
+.mobile-sidebar-close:active {
+  transform: translate(1px, 1px);
+  box-shadow: 0.5px 0.5px 0px #000000;
+}
+
+/* Heatmap cell grid styling */
+.heatmap-cell {
+  background-color: #FAF8F5; /* default empty cell */
+}
+
+.heatmap-cell-0 {
+  background-color: #FAF8F5 !important;
+}
+
+.heatmap-cell-1 {
+  background-color: #DCFCE7 !important; /* emerald 50 */
+}
+
+.heatmap-cell-2 {
+  background-color: #86EFAC !important; /* emerald 200 */
+}
+
+.heatmap-cell-3 {
+  background-color: #22C55E !important; /* emerald 500 */
+}
+
+.heatmap-cell-4 {
+  background-color: #15803D !important; /* emerald 700 */
+}
+
+.heatmap-cell-future {
+  opacity: 0.2;
+  background-color: #E7E5E4 !important;
+}
+
+/* Selected Friend Select Pill in Excel Export */
+.partner-select-pill {
+  transition: var(--transition-fast);
+}
+.partner-select-pill:hover {
+  background-color: #f5f5f4 !important;
+  transform: translateY(-1px);
+}
+
+/* Media Queries for Sidebar Responsiveness */
+@media (max-width: 768px) {
+  .app-layout-wrapper {
+    flex-direction: column;
+  }
+  
+  .desktop-sidebar {
+    display: none;
+  }
+
+  .mobile-header {
+    display: flex;
+  }
+
+  .desktop-top-header {
+    display: none !important;
+  }
+
+  .app-content-area {
+    padding: 1.5rem 1rem;
+  }
+}

@@ -13,19 +13,29 @@ const connectDB = async () => {
         return;
     }
 
-    try {
-        const conn = await mongoose.connect(process.env.MONGO_URI, {
-            serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
-        });
-        
-        console.log(`MongoDB Connected: ${conn.connection.host}`);
-    } catch (error) {
-        console.error(`Error connecting to MongoDB: ${error.message}`);
-        // Only exit process if it's the initial startup failure
-        if (mongoose.connection.readyState !== 1) {
-            process.exit(1); 
+    const uris = [
+        process.env.MONGO_URI,
+        'mongodb://127.0.0.1:27017/peercolab'
+    ];
+
+    for (let i = 0; i < uris.length; i++) {
+        const uri = uris[i];
+        if (!uri) continue;
+
+        try {
+            console.log(`Attempting connection to MongoDB (${i === 0 ? 'Primary' : 'Local Fallback'})...`);
+            const conn = await mongoose.connect(uri, {
+                serverSelectionTimeoutMS: 4000, // Timeout after 4s
+            });
+            console.log(`MongoDB Connected: ${conn.connection.host}`);
+            return; // connection successful
+        } catch (error) {
+            console.error(`Error connecting to MongoDB: ${error.message}`);
         }
     }
+
+    console.error('All MongoDB connection attempts failed.');
+    process.exit(1);
 };
 
 module.exports = connectDB;

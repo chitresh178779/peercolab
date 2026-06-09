@@ -4,7 +4,7 @@ import ExcelJS from 'exceljs';
 import { X, Download, FileSpreadsheet, User, Mail, Award, CheckCircle2, Clock, BookOpen, Filter, ArrowRight } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
-function UserProfile({ userId, profileId, onClose, currentUsername, isSelf }) {
+function UserProfile({ userId, profileId, onClose, currentUsername, isSelf, inline = false }) {
   const [profileData, setProfileData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -326,6 +326,14 @@ function UserProfile({ userId, profileId, onClose, currentUsername, isSelf }) {
   };
 
   if (loading) {
+    if (inline) {
+      return (
+        <div className="workspace-pane animate-fade-in" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '350px' }}>
+          <div className="spinner"></div>
+          <p style={{ marginLeft: '1rem', color: 'var(--text-secondary)' }}>Loading profile environment...</p>
+        </div>
+      );
+    }
     return (
       <div className="profile-overlay-modal animate-fade-in">
         <div className="profile-modal-content glass-card" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '350px' }}>
@@ -337,6 +345,14 @@ function UserProfile({ userId, profileId, onClose, currentUsername, isSelf }) {
   }
 
   if (error || !profileData) {
+    if (inline) {
+      return (
+        <div className="workspace-pane animate-fade-in" style={{ padding: '2rem', textAlign: 'center' }}>
+          <h3 style={{ color: 'var(--accent-rose)', marginBottom: '1rem' }}>⚠️ Access Error</h3>
+          <p>{error || 'Unable to retrieve user workspace.'}</p>
+        </div>
+      );
+    }
     return (
       <div className="profile-overlay-modal animate-fade-in">
         <div className="profile-modal-content glass-card" style={{ padding: '2rem', textAlign: 'center' }}>
@@ -380,13 +396,28 @@ function UserProfile({ userId, profileId, onClose, currentUsername, isSelf }) {
   const ongoingFiltered = filteredTasks.filter(t => !t.isCompleted);
   const completedFiltered = filteredTasks.filter(t => t.isCompleted);
 
+  const Wrapper = ({ children }) => {
+    if (inline) {
+      return (
+        <div className="workspace-pane animate-fade-in" style={{ width: '100%', maxWidth: '100%', background: '#ffffff', border: '2.5px solid #000000', borderRadius: '16px', padding: '2.2rem' }}>
+          {children}
+        </div>
+      );
+    }
+    return (
+      <div className="profile-overlay-modal animate-fade-in">
+        <div className="profile-modal-content glass-card">
+          <button className="close-modal-btn" onClick={onClose} title="Close Profile">
+            <X size={20} />
+          </button>
+          {children}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="profile-overlay-modal animate-fade-in">
-      <div className="profile-modal-content glass-card">
-        {/* Close Button */}
-        <button className="close-modal-btn" onClick={onClose} title="Close Profile">
-          <X size={20} />
-        </button>
+    <Wrapper>
 
         {/* Profile Header Block */}
         <div className="profile-header-block">
@@ -631,8 +662,7 @@ function UserProfile({ userId, profileId, onClose, currentUsername, isSelf }) {
           </div>
         </div>
 
-      </div>
-    </div>
+    </Wrapper>
   );
 }
 
