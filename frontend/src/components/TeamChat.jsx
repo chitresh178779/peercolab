@@ -377,7 +377,6 @@ function TeamChat({ user, socket }) {
           width: 100% !important;
         }
         .chat-input-form button {
-          width: auto !important;
           margin-top: 0 !important;
           flex-shrink: 0 !important;
         }
@@ -875,8 +874,8 @@ function TeamChat({ user, socket }) {
 
                 <button
                   type="submit"
-                  className="btn-primary"
                   disabled={!inputText.trim()}
+                  onClick={handleSend}
                   style={{
                     padding: '0.65rem',
                     borderRadius: '50%',
@@ -894,7 +893,7 @@ function TeamChat({ user, socket }) {
                     transition: 'var(--transition-fast)'
                   }}
                 >
-                  <Send size={16} />
+                  <Send size={16} style={{ pointerEvents: 'none' }} />
                 </button>
               </form>
             </div>

@@ -1519,8 +1519,8 @@ form[style*="display: flex"] {
   left: 0;
   width: 100vw;
   height: 100vh;
-  background: rgba(250, 248, 245, 0.45); /* translucent warm background */
-  backdrop-filter: blur(25px); /* glassmorphism */
+  background: rgba(250, 248, 245, 0.45); /* translucent warm background overlay */
+  backdrop-filter: blur(25px); /* glassmorphism for the rest of the page */
   -webkit-backdrop-filter: blur(25px);
   z-index: 1000;
   display: flex;
@@ -1528,16 +1528,25 @@ form[style*="display: flex"] {
   animation: fadeInOverlay 0.3s ease-out;
 }
 
+.mobile-sidebar-overlay.closing {
+  animation: fadeOutOverlay 0.3s ease-in forwards;
+}
+
 @keyframes fadeInOverlay {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@keyframes fadeOutOverlay {
+  from { opacity: 1; }
+  to { opacity: 0; }
 }
 
 .mobile-sidebar-content {
   width: 80%;
   max-width: 320px;
   height: 100%;
-  background: rgba(255, 255, 255, 0.85); /* semi-transparent glass panel */
+  background: #ffffff; /* solid white panel */
   border-right: 3px solid #000000;
   padding: 2.5rem 1.75rem 2rem 1.75rem;
   display: flex;
@@ -1548,9 +1557,18 @@ form[style*="display: flex"] {
   position: relative;
 }
 
+.mobile-sidebar-content.closing {
+  animation: slideOutSidebar 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @keyframes slideInSidebar {
   from { transform: translateX(-100%); }
   to { transform: translateX(0); }
+}
+
+@keyframes slideOutSidebar {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
 }
 
 .mobile-sidebar-close {
@@ -1634,5 +1652,10 @@ form[style*="display: flex"] {
 
   .app-content-area {
     padding: 1.5rem 1rem;
+  }
+
+  .combined-export-panel .btn-purple {
+    width: 100%;
+    justify-content: center;
   }
 }

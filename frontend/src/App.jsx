@@ -27,6 +27,15 @@ function App() {
   const [activeProfileId, setActiveProfileId] = useState(null);
   const [currentTab, setCurrentTab] = useState('workspace');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileSidebarClosing, setMobileSidebarClosing] = useState(false);
+
+  const closeMobileSidebar = () => {
+    setMobileSidebarClosing(true);
+    setTimeout(() => {
+      setMobileSidebarOpen(false);
+      setMobileSidebarClosing(false);
+    }, 280);
+  };
 
   // Register push notifications when user is active
   useEffect(() => {
@@ -302,18 +311,18 @@ function App() {
       </header>
 
       {/* MOBILE TRANSLUCENT GLASS SIDEBAR OVERLAY */}
-      {mobileSidebarOpen && (
+      {(mobileSidebarOpen || mobileSidebarClosing) && (
         <div 
-          className="mobile-sidebar-overlay" 
-          onClick={() => setMobileSidebarOpen(false)}
+          className={`mobile-sidebar-overlay ${mobileSidebarClosing ? 'closing' : ''}`} 
+          onClick={closeMobileSidebar}
         >
           <div 
-            className="mobile-sidebar-content" 
+            className={`mobile-sidebar-content ${mobileSidebarClosing ? 'closing' : ''}`} 
             onClick={(e) => e.stopPropagation()}
           >
             <button 
               className="mobile-sidebar-close" 
-              onClick={() => setMobileSidebarOpen(false)}
+              onClick={closeMobileSidebar}
               title="Close Menu"
             >
               <X size={16} />
@@ -329,49 +338,49 @@ function App() {
 
               <nav className="sidebar-menu">
                 <button 
-                  onClick={() => { setCurrentTab('workspace'); setMobileSidebarOpen(false); }} 
+                  onClick={() => { setCurrentTab('workspace'); closeMobileSidebar(); }} 
                   className={`sidebar-menu-btn ${currentTab === 'workspace' ? 'active' : ''}`}
                 >
                   <LayoutGrid size={18} />
                   <span>Workspace</span>
                 </button>
                 <button 
-                  onClick={() => { setCurrentTab('challenges'); setMobileSidebarOpen(false); }} 
+                  onClick={() => { setCurrentTab('challenges'); closeMobileSidebar(); }} 
                   className={`sidebar-menu-btn ${currentTab === 'challenges' ? 'active' : ''}`}
                 >
                   <Sparkles size={18} />
                   <span>Challenges</span>
                 </button>
                 <button 
-                  onClick={() => { setCurrentTab('chat'); setMobileSidebarOpen(false); }} 
+                  onClick={() => { setCurrentTab('chat'); closeMobileSidebar(); }} 
                   className={`sidebar-menu-btn ${currentTab === 'chat' ? 'active' : ''}`}
                 >
                   <MessageSquareCode size={18} />
                   <span>Live Chat</span>
                 </button>
                 <button 
-                  onClick={() => { setCurrentTab('feed'); setMobileSidebarOpen(false); }} 
+                  onClick={() => { setCurrentTab('feed'); closeMobileSidebar(); }} 
                   className={`sidebar-menu-btn ${currentTab === 'feed' ? 'active' : ''}`}
                 >
                   <Users size={18} />
                   <span>Partners Feed</span>
                 </button>
                 <button 
-                  onClick={() => { setCurrentTab('partners'); setMobileSidebarOpen(false); }} 
+                  onClick={() => { setCurrentTab('partners'); closeMobileSidebar(); }} 
                   className={`sidebar-menu-btn ${currentTab === 'partners' ? 'active' : ''}`}
                 >
                   <Users size={18} />
                   <span>Manage Partners</span>
                 </button>
                 <button 
-                  onClick={() => { setCurrentTab('heatmap'); setMobileSidebarOpen(false); }} 
+                  onClick={() => { setCurrentTab('heatmap'); closeMobileSidebar(); }} 
                   className={`sidebar-menu-btn ${currentTab === 'heatmap' ? 'active' : ''}`}
                 >
                   <Calendar size={18} />
                   <span>Activity Heatmap</span>
                 </button>
                 <button 
-                  onClick={() => { setCurrentTab('profile'); setMobileSidebarOpen(false); }} 
+                  onClick={() => { setCurrentTab('profile'); closeMobileSidebar(); }} 
                   className={`sidebar-menu-btn ${currentTab === 'profile' ? 'active' : ''}`}
                 >
                   <User size={18} />

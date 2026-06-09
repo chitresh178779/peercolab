@@ -548,7 +548,7 @@ function UserProfile({ userId, profileId, onClose, currentUsername, isSelf, inli
                       );
                     })}
                   </div>
-                  <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-end', marginTop: '0.5rem' }}>
+                  <div style={{ display: 'flex', width: '100%', justifyContent: 'flex-start', marginTop: '1rem' }}>
                     <button 
                       onClick={handleExportCombined} 
                       disabled={selectedFriendIds.length === 0 || exportingCombined}
