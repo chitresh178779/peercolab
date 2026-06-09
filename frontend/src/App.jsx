@@ -11,6 +11,7 @@ import UserProfile from './components/UserProfile';
 import Auth from './components/Auth';
 import NotificationBell from './components/NotificationBell';
 import TeamChat from './components/TeamChat';
+import { subscribeToPushNotifications } from './utils/pushSubscription';
 import './App.css';
 
 const socket = io.connect(API_BASE_URL);
@@ -24,6 +25,13 @@ function App() {
   const [recTrigger, setRecTrigger] = useState(0);
   const [activeProfileId, setActiveProfileId] = useState(null);
   const [currentTab, setCurrentTab] = useState('dashboard');
+
+  // Register push notifications when user is active
+  useEffect(() => {
+    if (user && user.id) {
+      subscribeToPushNotifications(user.id);
+    }
+  }, [user]);
 
   // Load baseline configuration elements and token sessions
   useEffect(() => {
