@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   Plus, Search, Trash2, Star, Maximize2, Grid, List, 
-  Loader2, Sparkles, Lightbulb, X, ArrowUpDown, ChevronDown, Check
+  Loader2, Sparkles, Lightbulb, X, ArrowUpDown, ChevronDown, Check, Settings
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -19,6 +19,10 @@ export default function IdeaVault({ currentUserId }) {
   const [newIdeaPriority, setNewIdeaPriority] = useState('');
   const [showForm, setShowForm] = useState(false);
 
+  // Settings State
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [tempApiKey, setTempApiKey] = useState(localStorage.getItem('gemini_api_key') || '');
+
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProject, setSelectedProject] = useState('All');
@@ -34,10 +38,35 @@ export default function IdeaVault({ currentUserId }) {
 
   // Expand Modal State
   const [activeExpandedIdea, setActiveExpandedIdea] = useState(null);
+  const [dbHasKey, setDbHasKey] = useState(false);
 
   useEffect(() => {
     fetchIdeas();
+    fetchDbKeyStatus();
   }, [currentUserId]);
+
+  const fetchDbKeyStatus = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/users/${currentUserId}/secret-key`);
+      setDbHasKey(res.data.hasKey);
+    } catch (err) {
+      console.error('Error fetching backend key status:', err);
+    }
+  };
+
+  const handleRetrieveKeyFromProfile = async () => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/users/${currentUserId}/secret-key?decrypt=true`);
+      if (res.data.key) {
+        setTempApiKey(res.data.key);
+      } else {
+        alert('No saved key found in your profile.');
+      }
+    } catch (err) {
+      console.error('Error retrieving key from profile:', err);
+      alert('Failed to retrieve key from profile.');
+    }
+  };
 
   const fetchIdeas = async () => {
     try {
@@ -65,13 +94,15 @@ export default function IdeaVault({ currentUserId }) {
 
     try {
       setSubmitting(true);
+      const key = localStorage.getItem('gemini_api_key');
+      const config = key ? { headers: { 'x-gemini-key': key } } : {};
       const res = await axios.post(`${API_BASE_URL}/api/ideas`, {
         userId: currentUserId,
         content: newIdeaText,
         project: newIdeaProject || undefined,
         type: newIdeaType || undefined,
         priority: newIdeaPriority || undefined
-      });
+      }, config);
       setIdeas([res.data, ...ideas]);
       setNewIdeaText('');
       setNewIdeaProject('');
@@ -124,7 +155,9 @@ export default function IdeaVault({ currentUserId }) {
 
     try {
       setExpandingId(ideaId);
-      const res = await axios.post(`${API_BASE_URL}/api/ideas/${ideaId}/expand`);
+      const key = localStorage.getItem('gemini_api_key');
+      const config = key ? { headers: { 'x-gemini-key': key } } : {};
+      const res = await axios.post(`${API_BASE_URL}/api/ideas/${ideaId}/expand`, {}, config);
       setIdeas(ideas.map(idea => idea._id === ideaId ? res.data : idea));
       setActiveExpandedIdea(res.data);
     } catch (err) {
@@ -190,13 +223,29 @@ export default function IdeaVault({ currentUserId }) {
     <div className="idea-vault-container">
       {/* HEADER SECTION */}
       <div className="vault-header-actions">
-        <button 
-          className="btn-primary new-idea-trigger" 
-          onClick={() => setShowForm(!showForm)}
-        >
-          <Plus size={16} />
-          <span>New Idea</span>
-        </button>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <button 
+            className="btn-primary new-idea-trigger" 
+            onClick={() => setShowForm(!showForm)}
+          >
+            <Plus size={16} />
+            <span>New Idea</span>
+          </button>
+
+          <button 
+            className="btn-secondary ai-settings-trigger" 
+            onClick={() => {
+              setTempApiKey(localStorage.getItem('gemini_api_key') || '');
+              setShowSettingsModal(true);
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', border: '2.5px solid #000000', borderRadius: '10px' }}
+            title="Configure Gemini API Connection"
+          >
+            <Settings size={16} />
+            <span>AI Connection</span>
+            <span className={`ai-status-dot ${localStorage.getItem('gemini_api_key') ? 'connected' : 'heuristics'}`} />
+          </button>
+        </div>
 
         <div className="view-toggle-buttons">
           <button 
@@ -667,6 +716,92 @@ export default function IdeaVault({ currentUserId }) {
               >
                 <Trash2 size={14} />
                 <span>Delete Idea</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSettingsModal && (
+        <div className="idea-expand-overlay" onClick={() => setShowSettingsModal(false)}>
+          <div className="idea-expand-modal settings-modal animate-slide-up" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="modal-close-btn"
+              onClick={() => setShowSettingsModal(false)}
+              title="Close modal"
+            >
+              <X size={18} />
+            </button>
+
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Settings size={20} style={{ color: 'var(--accent-purple)' }} />
+                <h2 className="modal-title" style={{ margin: 0 }}>AI Connection Settings</h2>
+              </div>
+            </div>
+
+            <div className="modal-body-scroll" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <p style={{ fontSize: '0.9rem', color: '#57534e', lineHeight: '1.4', margin: 0 }}>
+                To connect the Idea Vault to a live Gemini AI model, enter your Google AI Studio API Key below. 
+                You can save it locally in your browser, or autofill it from your profile if you previously saved it in your settings.
+              </p>
+
+              <div className="form-field-group">
+                <label className="form-field-label">Gemini API Key</label>
+                <div className="api-key-input-group">
+                  <input
+                    type="password"
+                    value={tempApiKey}
+                    onChange={(e) => setTempApiKey(e.target.value)}
+                    placeholder="AIzaSy..."
+                    className="form-field-input"
+                    style={{ letterSpacing: tempApiKey ? '0.125em' : 'normal', flex: 1 }}
+                  />
+                  {dbHasKey && (
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      onClick={handleRetrieveKeyFromProfile}
+                      style={{ padding: '0.5rem 0.75rem', border: '2.5px solid #000000', borderRadius: '8px', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.25rem', whiteSpace: 'nowrap' }}
+                      title="Load the key stored securely in your user profile"
+                    >
+                      <Sparkles size={14} />
+                      <span>Autofill from Profile</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="ai-hint" style={{ background: '#ecfdf5', borderColor: '#000000', color: '#065f46' }}>
+                <Sparkles size={14} />
+                <span>You can get a free API Key from the Google AI Studio console.</span>
+              </div>
+            </div>
+
+            <div className="modal-footer" style={{ justifyContent: 'flex-end', gap: '0.75rem' }}>
+              {localStorage.getItem('gemini_api_key') && (
+                <button 
+                  className="btn-secondary delete-btn-footer"
+                  onClick={() => {
+                    localStorage.removeItem('gemini_api_key');
+                    setTempApiKey('');
+                    setShowSettingsModal(false);
+                    alert('Gemini API Key removed. Vault will use heuristic fallback analysis.');
+                  }}
+                  style={{ border: '2px solid #000000' }}
+                >
+                  Disconnect AI
+                </button>
+              )}
+              <button 
+                className="btn-primary" 
+                onClick={() => {
+                  localStorage.setItem('gemini_api_key', tempApiKey.trim());
+                  setShowSettingsModal(false);
+                  alert(tempApiKey.trim() ? 'Gemini API Key saved successfully! The vault is now connected to live AI.' : 'Saved! Heuristics fallback will be used.');
+                }}
+              >
+                Save Settings
               </button>
             </div>
           </div>

@@ -279,4 +279,83 @@ router.get('/:userId/feed', async (req, res) => {
     }
 });
 
+const { encrypt, decrypt } = require('../utils/crypto');
+
+// @route   GET /api/users/:userId/secret-key
+// @desc    Check if a user has a Gemini API Key saved, and get a masked version (or decrypted if requested)
+router.get('/:userId/secret-key', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        if (!user.geminiApiKey) {
+            return res.json({ hasKey: false, maskedKey: '', key: '' });
+        }
+
+        // Decrypt to verify and generate mask
+        const decrypted = decrypt(user.geminiApiKey);
+        if (!decrypted) {
+            return res.json({ hasKey: false, maskedKey: '', key: '' });
+        }
+
+        // Masking logic: keep first 6 and last 4 characters, e.g. AIzaSy...45
+        const masked = decrypted.length > 10 
+            ? `${decrypted.substring(0, 6)}...${decrypted.substring(decrypted.length - 4)}`
+            : 'Saved & Encrypted';
+
+        const responseData = { hasKey: true, maskedKey: masked };
+        if (req.query.decrypt === 'true') {
+            responseData.key = decrypted;
+        }
+
+        res.json(responseData);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error checking key', error: error.message });
+    }
+});
+
+// @route   POST /api/users/:userId/secret-key
+// @desc    Encrypt and save the user's Gemini API Key
+router.post('/:userId/secret-key', async (req, res) => {
+    try {
+        const { geminiApiKey } = req.body;
+        if (!geminiApiKey || !geminiApiKey.trim()) {
+            return res.status(400).json({ message: 'API Key is required' });
+        }
+
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Encrypt the key
+        const encryptedKey = encrypt(geminiApiKey.trim());
+        user.geminiApiKey = encryptedKey;
+        await user.save();
+
+        // Generate masked key snippet to return to frontend
+        const masked = geminiApiKey.length > 10
+            ? `${geminiApiKey.trim().substring(0, 6)}...${geminiApiKey.trim().substring(geminiApiKey.trim().length - 4)}`
+            : 'Saved & Encrypted';
+
+        res.json({ success: true, message: 'Gemini API Key saved and encrypted successfully.', hasKey: true, maskedKey: masked });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error saving key', error: error.message });
+    }
+});
+
+// @route   DELETE /api/users/:userId/secret-key
+// @desc    Delete the user's stored Gemini API Key
+router.delete('/:userId/secret-key', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        user.geminiApiKey = '';
+        await user.save();
+
+        res.json({ success: true, message: 'Gemini API Key removed successfully.', hasKey: false, maskedKey: '' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error removing key', error: error.message });
+    }
+});
+
 module.exports = router;

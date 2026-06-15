@@ -17,6 +17,59 @@ function UserProfile({ userId, profileId, onClose, currentUsername, isSelf, inli
   const [selectedFriendIds, setSelectedFriendIds] = useState([]);
   const [exportingCombined, setExportingCombined] = useState(false);
 
+  // Secret Keys State
+  const [geminiKeyInput, setGeminiKeyInput] = useState('');
+  const [dbMaskedKey, setDbMaskedKey] = useState('');
+  const [savingKey, setSavingKey] = useState(false);
+
+  const fetchSecretKeyStatus = async () => {
+    if (!isSelf) return;
+    try {
+      const res = await axios.get(`${API_BASE_URL}/api/users/${profileId}/secret-key`);
+      if (res.data.hasKey) {
+        setDbMaskedKey(res.data.maskedKey);
+      } else {
+        setDbMaskedKey('');
+      }
+    } catch (err) {
+      console.error('Error fetching secret key status:', err);
+    }
+  };
+
+  const handleSaveSecretKey = async () => {
+    if (!geminiKeyInput.trim()) return;
+    try {
+      setSavingKey(true);
+      const res = await axios.post(`${API_BASE_URL}/api/users/${userId}/secret-key`, {
+        geminiApiKey: geminiKeyInput.trim()
+      });
+      setDbMaskedKey(res.data.maskedKey);
+      setGeminiKeyInput('');
+      alert('Gemini API Key encrypted and saved successfully in the backend database.');
+    } catch (err) {
+      console.error('Error saving secret key:', err);
+      alert(err.response?.data?.message || 'Failed to save secret key.');
+    } finally {
+      setSavingKey(false);
+    }
+  };
+
+  const handleDeleteSecretKey = async () => {
+    if (!window.confirm('Are you sure you want to delete your saved Gemini API Key?')) return;
+    try {
+      setSavingKey(true);
+      await axios.delete(`${API_BASE_URL}/api/users/${userId}/secret-key`);
+      setDbMaskedKey('');
+      setGeminiKeyInput('');
+      alert('Gemini API Key deleted successfully.');
+    } catch (err) {
+      console.error('Error deleting secret key:', err);
+      alert(err.response?.data?.message || 'Failed to delete secret key.');
+    } finally {
+      setSavingKey(false);
+    }
+  };
+
   const handleToggleFriend = (friendId) => {
     setSelectedFriendIds(prev => 
       prev.includes(friendId) 
@@ -37,6 +90,7 @@ function UserProfile({ userId, profileId, onClose, currentUsername, isSelf, inli
     fetchProfile();
     if (isSelf) {
       fetchFriends();
+      fetchSecretKeyStatus();
     }
   }, [profileId]);
 
@@ -570,6 +624,58 @@ function UserProfile({ userId, profileId, onClose, currentUsername, isSelf, inli
                   </div>
                 </>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* SECRET KEYS & INTEGRATIONS PANEL (Self Only) */}
+        {isSelf && (
+          <div className="combined-export-panel" style={{ marginTop: '1.5rem', background: '#FAF8F5' }}>
+            <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Award size={16} style={{ color: 'var(--accent-purple)' }} />
+              <span>Secret Keys & Integrations</span>
+            </h4>
+            <div className="combined-export-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '1rem' }}>
+              <p className="combined-desc" style={{ maxWidth: '100%', margin: 0 }}>
+                Configure keys for external AI integrations. Your API keys are encrypted in the backend database using AES-256-CBC and are never exposed as plain text.
+              </p>
+
+              <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="form-field-group">
+                  <label className="form-field-label">Google Gemini API Key</label>
+                  <div style={{ display: 'flex', gap: '0.75rem', width: '100%', flexWrap: 'wrap' }}>
+                    <input
+                      type="password"
+                      value={geminiKeyInput}
+                      onChange={(e) => setGeminiKeyInput(e.target.value)}
+                      placeholder={dbMaskedKey ? dbMaskedKey : "AIzaSy... (not configured)"}
+                      className="form-field-input"
+                      style={{ flex: 1, minWidth: '240px', letterSpacing: geminiKeyInput ? '0.125em' : 'normal' }}
+                      disabled={savingKey}
+                    />
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      {dbMaskedKey ? (
+                        <button
+                          className="btn-secondary delete-btn-footer"
+                          onClick={handleDeleteSecretKey}
+                          style={{ border: '2px solid #000000', margin: 0, padding: '0.5rem 1rem' }}
+                          disabled={savingKey}
+                        >
+                          Delete Key
+                        </button>
+                      ) : null}
+                      <button
+                        className="btn-primary"
+                        onClick={handleSaveSecretKey}
+                        style={{ padding: '0.5rem 1.25rem' }}
+                        disabled={savingKey || !geminiKeyInput.trim()}
+                      >
+                        {savingKey ? 'Saving...' : 'Save Key'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

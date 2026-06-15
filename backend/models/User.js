@@ -33,7 +33,11 @@ const UserSchema = new mongoose.Schema({
             p256dh: { type: String, required: true },
             auth: { type: String, required: true }
         }
-    }]
+    }],
+    geminiApiKey: {
+        type: String,
+        default: ''
+    }
 }, { timestamps: true }); // Automatically adds createdAt and updatedAt fields
 
 module.exports = mongoose.model('User', UserSchema);

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Idea = require('../models/Idea');
+const User = require('../models/User');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // Heuristic fallback for metadata extraction
@@ -111,10 +112,27 @@ router.post('/', async (req, res) => {
     if (!content || !content.trim()) return res.status(400).json({ message: 'Content is required' });
 
     let extracted = null;
+    let apiKey = req.headers['x-gemini-key'];
 
-    if (process.env.GEMINI_API_KEY) {
+    if (!apiKey) {
       try {
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const user = await User.findById(userId);
+        if (user && user.geminiApiKey) {
+          const { decrypt } = require('../utils/crypto');
+          apiKey = decrypt(user.geminiApiKey);
+        }
+      } catch (err) {
+        console.error('Failed to decrypt database API key:', err.message);
+      }
+    }
+
+    if (!apiKey) {
+      apiKey = process.env.GEMINI_API_KEY;
+    }
+
+    if (apiKey) {
+      try {
+        const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         
         const prompt = `Analyze this idea text: "${content}"
@@ -209,10 +227,27 @@ router.post('/:ideaId/expand', async (req, res) => {
     if (!idea) return res.status(404).json({ message: 'Idea not found' });
 
     let expanded = null;
+    let apiKey = req.headers['x-gemini-key'];
 
-    if (process.env.GEMINI_API_KEY) {
+    if (!apiKey) {
       try {
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const user = await User.findById(idea.user);
+        if (user && user.geminiApiKey) {
+          const { decrypt } = require('../utils/crypto');
+          apiKey = decrypt(user.geminiApiKey);
+        }
+      } catch (err) {
+        console.error('Failed to decrypt database API key for expand:', err.message);
+      }
+    }
+
+    if (!apiKey) {
+      apiKey = process.env.GEMINI_API_KEY;
+    }
+
+    if (apiKey) {
+      try {
+        const genAI = new GoogleGenerativeAI(apiKey);
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         
         const prompt = `Analyze this idea:
