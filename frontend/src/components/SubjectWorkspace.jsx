@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { LayoutGrid, FolderPlus, Plus, BookOpen, CheckSquare, Lightbulb, CheckCircle, Save, Trash2, UserPlus, Shield, ChevronDown, ChevronRight } from 'lucide-react';
 
-function SubjectWorkspace({ 
-  subjects, 
+function SubjectWorkspace({
+  subjects,
   currentUserId,
-  onAddSubject, 
-  onDeleteSubject, 
-  onAddTask, 
-  onDeleteTask, 
-  onCompleteTask, 
+  onAddSubject,
+  onDeleteSubject,
+  onAddTask,
+  onDeleteTask,
+  onCompleteTask,
   onAddTip,
   onShareSubject,
   onAssignTask
@@ -31,7 +31,7 @@ function SubjectWorkspace({
     e.preventDefault();
     if (!newSubjectName.trim()) return;
     setSubjectError('');
-    
+
     const res = await onAddSubject(newSubjectName);
     if (res && !res.success) {
       setSubjectError(res.error);
@@ -44,9 +44,9 @@ function SubjectWorkspace({
     e.preventDefault();
     const title = newTaskTitles[subjectId];
     if (!title || !title.trim()) return;
-    
+
     setTaskErrors(prev => ({ ...prev, [subjectId]: '' }));
-    
+
     const res = await onAddTask(subjectId, title);
     if (res && !res.success) {
       setTaskErrors(prev => ({ ...prev, [subjectId]: res.error }));
@@ -90,13 +90,13 @@ function SubjectWorkspace({
         <LayoutGrid size={20} className="icon-blue" style={{ color: 'var(--accent-blue)' }} />
         <span>Your Dashboard</span>
       </h3>
-      
+
       <form onSubmit={handleSubjectSubmit} style={{ marginBottom: '2rem', display: 'flex', gap: '0.75rem' }}>
         <div style={{ position: 'relative', flexGrow: 1 }}>
           <FolderPlus size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-          <input 
-            type="text" 
-            placeholder="New Subject (e.g., Data Structures, OS)" 
+          <input
+            type="text"
+            placeholder="New Subject (e.g., Data Structures, OS)"
             value={newSubjectName}
             onChange={(e) => {
               setNewSubjectName(e.target.value);
@@ -111,7 +111,7 @@ function SubjectWorkspace({
           <span>Add Subject</span>
         </button>
       </form>
- 
+
       {subjectError && (
         <div className="animate-fade-in" style={{ color: 'var(--accent-rose)', fontSize: '0.875rem', marginTop: '-1.5rem', marginBottom: '1.5rem', paddingLeft: '0.5rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
           <span>⚠️</span>
@@ -124,21 +124,21 @@ function SubjectWorkspace({
       ) : (
         subjects.map((subject, idx) => {
           const currentTab = activeTab[subject._id] || 'tasks';
-          
+
           // Check if current user is owner
           const isOwner = subject.owner?._id === currentUserId || subject.owner === currentUserId;
 
           return (
             <div key={subject._id} className="subject-card animate-fade-in" style={{ animationDelay: `${idx * 0.08}s` }}>
-              
+
               {/* Header card with delete subject & share button */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: expandedSubjects[subject._id] ? '0.5rem' : '0' }}>
-                <h4 
+                <h4
                   onClick={() => setExpandedSubjects(prev => ({ ...prev, [subject._id]: !prev[subject._id] }))}
-                  style={{ 
-                    margin: 0, 
-                    display: 'flex', 
-                    alignItems: 'center', 
+                  style={{
+                    margin: 0,
+                    display: 'flex',
+                    alignItems: 'center',
                     gap: '0.5rem',
                     cursor: 'pointer',
                     userSelect: 'none'
@@ -152,7 +152,7 @@ function SubjectWorkspace({
                   <BookOpen size={18} style={{ color: 'var(--accent-blue)', flexShrink: 0 }} />
                   <span>{subject.name}</span>
                 </h4>
-                
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   {isOwner && (
                     <button
@@ -234,19 +234,9 @@ function SubjectWorkspace({
                   {showShareForm[subject._id] && (
                     <form 
                       onSubmit={(e) => handleShareSubmit(e, subject._id)} 
-                      className="animate-fade-in"
-                      style={{ 
-                        backgroundColor: 'rgba(255, 255, 255, 0.03)', 
-                        border: '1px dashed var(--border-light)', 
-                        padding: '0.75rem', 
-                        borderRadius: '8px', 
-                        marginBottom: '1rem',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.5rem'
-                      }}
+                      className="share-subject-form animate-fade-in"
                     >
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <div className="share-input-group">
                         <input 
                           type="text" 
                           placeholder="Partner username..."
@@ -271,19 +261,19 @@ function SubjectWorkspace({
                       )}
                     </form>
                   )}
-                  
+
                   {/* Tabs to switch between Tasks and Tips */}
                   <div className="tab-menu" style={{ marginBottom: '1rem' }}>
-                    <button 
-                      className={currentTab === 'tasks' ? 'tab-btn active' : 'tab-btn'} 
+                    <button
+                      className={currentTab === 'tasks' ? 'tab-btn active' : 'tab-btn'}
                       onClick={() => setActiveTab({ ...activeTab, [subject._id]: 'tasks' })}
                       style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
                     >
                       <CheckSquare size={14} />
                       <span>Tasks ({subject.tasks?.length || 0})</span>
                     </button>
-                    <button 
-                      className={currentTab === 'tips' ? 'tab-btn active' : 'tab-btn'} 
+                    <button
+                      className={currentTab === 'tips' ? 'tab-btn active' : 'tab-btn'}
                       onClick={() => setActiveTab({ ...activeTab, [subject._id]: 'tips' })}
                       style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}
                     >
@@ -296,9 +286,9 @@ function SubjectWorkspace({
                   {currentTab === 'tasks' && (
                     <>
                       <form onSubmit={(e) => handleTaskSubmit(e, subject._id)} style={{ display: 'flex', marginBottom: '1rem', gap: '0.5rem' }}>
-                        <input 
-                          type="text" 
-                          placeholder="Add a target task..." 
+                        <input
+                          type="text"
+                          placeholder="Add a target task..."
                           value={newTaskTitles[subject._id] || ''}
                           onChange={(e) => {
                             setNewTaskTitles({ ...newTaskTitles, [subject._id]: e.target.value });
@@ -327,7 +317,7 @@ function SubjectWorkspace({
                         ) : (
                           subject.tasks?.map((task) => {
                             const assignedToVal = task.assignedTo?._id || task.assignedTo || '';
-                            
+
                             return (
                               <li key={task._id} className={task.isCompleted ? "task-done" : ""} style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem' }}>
                                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexGrow: 1, minWidth: 0, wordBreak: 'break-word', fontSize: '0.875rem' }}>
@@ -338,7 +328,7 @@ function SubjectWorkspace({
                                   )}
                                   <span>{task.title}</span>
                                 </span>
-                                
+
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                                   {(subject.isShared || (subject.collaborators && subject.collaborators.length > 0)) && (
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -374,7 +364,7 @@ function SubjectWorkspace({
                                   )}
 
                                   {!task.isCompleted && (
-                                    <button 
+                                    <button
                                       onClick={() => onCompleteTask(subject._id, task._id, task.title, subject.name)}
                                       className="btn-complete animate-fade-in"
                                       style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}
@@ -383,7 +373,7 @@ function SubjectWorkspace({
                                       <span>Done</span>
                                     </button>
                                   )}
-                                  
+
                                   <button
                                     onClick={() => {
                                       if (window.confirm(`Are you sure you want to delete the task "${task.title}"?`)) {
@@ -420,9 +410,9 @@ function SubjectWorkspace({
                   {currentTab === 'tips' && (
                     <>
                       <form onSubmit={(e) => handleTipSubmit(e, subject._id)} style={{ display: 'flex', marginBottom: '1rem', gap: '0.5rem' }}>
-                        <input 
-                          type="text" 
-                          placeholder="Upload a tip or resource link..." 
+                        <input
+                          type="text"
+                          placeholder="Upload a tip or resource link..."
                           value={newTipContents[subject._id] || ''}
                           onChange={(e) => setNewTipContents({ ...newTipContents, [subject._id]: e.target.value })}
                           className="form-input-small"

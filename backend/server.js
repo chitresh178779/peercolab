@@ -23,6 +23,7 @@ app.use('/api/subjects', require('./routes/subjects'));
 app.use('/api/quotes', require('./routes/quotes'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/notifications', require('./routes/notifications'));
+app.use('/api/ideas', require('./routes/ideas'));
 
 // A simple test route to verify the API is running
 app.get('/api/status', (req, res) => {

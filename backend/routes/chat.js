@@ -14,10 +14,10 @@ router.get('/history/:userId/:friendId', async (req, res) => {
             ],
             deletedForUsers: { $ne: userId }
         })
-        .sort({ createdAt: 1 }) // Chronological order
-        .populate('sender', 'username')
-        .populate('recipient', 'username');
-        
+            .sort({ createdAt: 1 }) // Chronological order
+            .populate('sender', 'username')
+            .populate('recipient', 'username');
+
         res.json(messages);
     } catch (error) {
         res.status(500).json({ message: 'Server Error fetching messages', error: error.message });

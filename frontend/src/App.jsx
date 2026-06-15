@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
 import axios from 'axios';
-import { Sparkles, LogOut, MessageSquareCode, User, LayoutGrid, Users, Calendar, Menu, X } from 'lucide-react';
+import { Sparkles, LogOut, MessageSquareCode, User, LayoutGrid, Users, Calendar, Menu, X, Lightbulb } from 'lucide-react';
 import { API_BASE_URL } from './config';
 import SubjectWorkspace from './components/SubjectWorkspace';
 import FriendFeed from './components/FriendFeed';
@@ -12,6 +12,7 @@ import ActivityHeatmap from './components/ActivityHeatmap';
 import Auth from './components/Auth';
 import NotificationBell from './components/NotificationBell';
 import TeamChat from './components/TeamChat';
+import IdeaVault from './components/IdeaVault';
 import { subscribeToPushNotifications } from './utils/pushSubscription';
 import './App.css';
 
@@ -233,6 +234,13 @@ function App() {
               <span>Workspace</span>
             </button>
             <button 
+              onClick={() => setCurrentTab('vault')} 
+              className={`sidebar-menu-btn ${currentTab === 'vault' ? 'active' : ''}`}
+            >
+              <Lightbulb size={18} />
+              <span>Idea Vault</span>
+            </button>
+            <button 
               onClick={() => setCurrentTab('challenges')} 
               className={`sidebar-menu-btn ${currentTab === 'challenges' ? 'active' : ''}`}
             >
@@ -345,6 +353,13 @@ function App() {
                   <span>Workspace</span>
                 </button>
                 <button 
+                  onClick={() => { setCurrentTab('vault'); closeMobileSidebar(); }} 
+                  className={`sidebar-menu-btn ${currentTab === 'vault' ? 'active' : ''}`}
+                >
+                  <Lightbulb size={18} />
+                  <span>Idea Vault</span>
+                </button>
+                <button 
                   onClick={() => { setCurrentTab('challenges'); closeMobileSidebar(); }} 
                   className={`sidebar-menu-btn ${currentTab === 'challenges' ? 'active' : ''}`}
                 >
@@ -453,6 +468,10 @@ function App() {
               onShareSubject={handleShareSubject}
               onAssignTask={handleAssignTask}
             />
+          )}
+
+          {currentTab === 'vault' && (
+            <IdeaVault currentUserId={user.id} />
           )}
 
           {currentTab === 'challenges' && (
