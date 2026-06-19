@@ -487,9 +487,22 @@ function UserProfile({ userId, profileId, onClose, currentUsername, isSelf, inli
               <Mail size={14} style={{ color: 'var(--text-muted)' }} />
               <span>{user.email}</span>
             </p>
-            <p className="profile-network-stats">
+            <p className="profile-network-stats" style={{ marginBottom: '0.5rem' }}>
               <span>🤝 <strong>{user.friendsCount}</strong> Study Partners</span>
             </p>
+            
+            {/* Level & XP Progress Bar */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.75rem', width: '100%', maxWidth: '280px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 800 }}>
+                <span style={{ color: 'var(--accent-purple)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  🏆 Level {user.level || 1}
+                </span>
+                <span style={{ color: 'var(--text-secondary)' }}>{(user.xp || 0) % 100} / 100 XP</span>
+              </div>
+              <div style={{ width: '100%', height: '10px', background: '#fafaf9', border: '2px solid #000000', borderRadius: '10px', overflow: 'hidden', boxShadow: '1.5px 1.5px 0px #000000' }}>
+                <div style={{ width: `${(user.xp || 0) % 100}%`, height: '100%', background: 'var(--accent-purple)', transition: 'width 0.4s ease' }} />
+              </div>
+            </div>
           </div>
           
           {/* Quick Actions / Self Export */}

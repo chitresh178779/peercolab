@@ -23,7 +23,8 @@ const SubjectSchema = new mongoose.Schema({
         title: { type: String, required: true },
         isCompleted: { type: Boolean, default: false },
         completedAt: { type: Date },
-        assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
+        assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        isChallenge: { type: Boolean, default: false }
     }],
     // An array to hold text, markdown, or links for tips
     tips: [{

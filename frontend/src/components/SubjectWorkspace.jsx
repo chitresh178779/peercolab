@@ -326,7 +326,17 @@ function SubjectWorkspace({
                                   ) : (
                                     <span style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid var(--text-muted)', display: 'inline-block', flexShrink: 0 }} />
                                   )}
-                                  <span>{task.title}</span>
+                                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                    <span style={{ fontWeight: 600 }}>{task.title}</span>
+                                    {task.isChallenge && (
+                                      <span style={{ fontSize: '0.65rem', fontWeight: 800, color: 'var(--accent-purple)', background: 'rgba(109, 40, 217, 0.1)', border: '1px solid var(--accent-purple)', padding: '0.05rem 0.25rem', borderRadius: '4px' }}>
+                                        Challenge
+                                      </span>
+                                    )}
+                                    <span style={{ fontSize: '0.65rem', fontWeight: 700, color: task.isChallenge ? 'var(--accent-emerald)' : 'var(--text-muted)' }}>
+                                      (+{task.isChallenge ? '35' : '15'} XP)
+                                    </span>
+                                  </span>
                                 </span>
 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>

@@ -37,6 +37,14 @@ const UserSchema = new mongoose.Schema({
     geminiApiKey: {
         type: String,
         default: ''
+    },
+    xp: {
+        type: Number,
+        default: 0
+    },
+    level: {
+        type: Number,
+        default: 1
     }
 }, { timestamps: true }); // Automatically adds createdAt and updatedAt fields
 

@@ -1530,6 +1530,13 @@ form[style*="display: flex"] {
   width: 100%;
 }
 
+.mobile-page-title {
+  display: none;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
 /* Mobile Header / Navigation */
 .mobile-header {
   display: none;
@@ -1730,6 +1737,10 @@ form[style*="display: flex"] {
     display: none !important;
   }
 
+  .mobile-page-title {
+    display: flex !important;
+  }
+
   .app-content-area {
     padding: 1.5rem 1rem;
   }
@@ -1845,7 +1856,7 @@ form[style*="display: flex"] {
   background: var(--bg-dark);
   resize: vertical;
   transition: var(--transition-fast);
-  box-shadow: inset 2px 2px 0px rgba(0,0,0,0.05);
+  box-shadow: inset 2px 2px 0px rgba(0, 0, 0, 0.05);
 }
 
 .quick-idea-form .idea-textarea:focus {
@@ -2041,7 +2052,8 @@ form[style*="display: flex"] {
 
 .idea-card.is-favorite {
   border-color: #000000;
-  background: #fffbeb; /* Very subtle warm gold tint */
+  background: #fffbeb;
+  /* Very subtle warm gold tint */
 }
 
 .card-top {
@@ -2139,17 +2151,20 @@ form[style*="display: flex"] {
 }
 
 .priority-badge.high {
-  background: #fecdd3; /* Red-100 */
+  background: #fecdd3;
+  /* Red-100 */
   color: #9f1239;
 }
 
 .priority-badge.medium {
-  background: #fef08a; /* Yellow-100 */
+  background: #fef08a;
+  /* Yellow-100 */
   color: #854d0e;
 }
 
 .priority-badge.low {
-  background: #dcfce7; /* Green-100 */
+  background: #dcfce7;
+  /* Green-100 */
   color: #166534;
 }
 
@@ -2552,7 +2567,8 @@ form[style*="display: flex"] {
 }
 
 .next-steps-section {
-  background: #ecfdf5; /* Emerald-50 tint */
+  background: #ecfdf5;
+  /* Emerald-50 tint */
   border: 2px solid #000000;
   border-radius: 8px;
   padding: 1rem;
@@ -2617,7 +2633,7 @@ form[style*="display: flex"] {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .new-idea-trigger {
     width: 100%;
     justify-content: center;
@@ -2678,7 +2694,7 @@ form[style*="display: flex"] {
   color: var(--text-muted);
 }
 
-.form-field-input, 
+.form-field-input,
 .form-field-select {
   border: 2px solid #000000;
   border-radius: 8px;
@@ -2691,7 +2707,7 @@ form[style*="display: flex"] {
   transition: var(--transition-fast);
 }
 
-.form-field-input:focus, 
+.form-field-input:focus,
 .form-field-select:focus {
   box-shadow: 2px 2px 0px #000000;
   transform: translate(-1px, -1px);
@@ -2738,7 +2754,7 @@ form[style*="display: flex"] {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .api-key-input-group button {
     justify-content: center;
     width: 100%;
@@ -2749,10 +2765,188 @@ form[style*="display: flex"] {
     align-items: stretch;
     gap: 0.5rem;
   }
-  
+
   .settings-modal .modal-footer button {
     width: 100%;
     justify-content: center;
     margin: 0;
+  }
+}
+
+/* Landing Page Animations & Styling */
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.ai-cursor {
+  animation: blink 0.8s step-end infinite;
+  color: var(--accent-blue);
+  display: inline-block;
+  width: 2px;
+  background-color: var(--accent-blue);
+  margin-left: 2px;
+}
+
+.landing-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+#interactive-playground .sidebar-menu-btn {
+  transition: var(--transition-fast) !important;
+}
+
+#interactive-playground .sidebar-menu-btn:hover {
+  transform: translate(-1.5px, -1.5px);
+  box-shadow: 3.5px 3.5px 0px #000000 !important;
+}
+
+#interactive-playground .sidebar-menu-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #000000 !important;
+}
+
+/* Responsive Landing Page Styling Classes */
+.landing-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  margin-bottom: 3.5rem;
+  border-radius: 16px;
+  transition: all 0.2s ease-in-out;
+}
+
+.playground-board {
+  padding: 0;
+  display: flex;
+  min-height: 520px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  border: 2.5px solid #000000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.playground-sidebar {
+  flex: 1 1 240px;
+  border-right: 2.5px solid #000000;
+  padding: 1.5rem;
+  background: #FAF8F5;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.playground-display {
+  flex: 2 2 500px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 320px;
+  background: #fff;
+}
+
+.landing-tech-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  padding: 2.5rem;
+  border: 2.5px solid #000000;
+  align-items: center;
+}
+
+.tech-card-left {
+  flex: 1 1 300px;
+}
+
+.tech-card-right {
+  flex: 1 1 350px;
+  background: #FAF8F5;
+  border: 2px solid #000;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.landing-playground-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.landing-playground-idea-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .landing-header {
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.25rem 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .landing-header > div {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .playground-board {
+    flex-direction: column;
+    min-height: auto;
+  }
+  .playground-sidebar {
+    border-right: none;
+    border-bottom: 2.5px solid #000000;
+    padding: 1.25rem 1rem;
+  }
+  .playground-display {
+    min-width: 100%;
+    padding: 1.25rem 1rem;
+  }
+  .landing-playground-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .landing-playground-header .btn-primary {
+    align-self: stretch;
+    justify-content: center;
+  }
+  .landing-tech-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.5rem 1.25rem;
+    gap: 1.5rem;
+  }
+  .tech-card-left, .tech-card-right {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+.landing-hero-btn {
+  padding: 0.9rem 2.2rem;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 580px) {
+  .landing-hero-btn {
+    padding: 0.8rem 1.5rem !important;
+    font-size: 0.95rem !important;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-wrapper {
+    padding: 1rem 0.75rem !important;
+  }
+  .landing-playground-idea-grid {
+    grid-template-columns: 1fr;
   }
 }

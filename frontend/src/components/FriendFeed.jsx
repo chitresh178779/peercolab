@@ -40,7 +40,7 @@ function FriendFeed({ liveAlerts, onViewProfile }) {
       </h3>
 
       {/* Sub-tab Switcher */}
-      <div className="tab-menu" style={{ marginBottom: '1.25rem', display: 'flex', gap: '0.5rem' }}>
+      <div className="tab-menu" style={{ marginBottom: '1.25rem', display: 'flex', gap: '0.5rem', justifyContent: 'flex-start' }}>
         <button 
           className={subTab === 'live' ? 'tab-btn active' : 'tab-btn'} 
           onClick={() => setSubTab('live')}
@@ -48,10 +48,9 @@ function FriendFeed({ liveAlerts, onViewProfile }) {
             display: 'flex', 
             alignItems: 'center', 
             gap: '0.35rem', 
-            flexGrow: 1, 
-            justifyContent: 'center',
-            padding: '0.5rem 0.25rem',
-            fontSize: '0.825rem'
+            padding: '0.5rem 1.25rem',
+            fontSize: '0.825rem',
+            cursor: 'pointer'
           }}
         >
           <Clock size={13} />
@@ -64,10 +63,9 @@ function FriendFeed({ liveAlerts, onViewProfile }) {
             display: 'flex', 
             alignItems: 'center', 
             gap: '0.35rem', 
-            flexGrow: 1, 
-            justifyContent: 'center',
-            padding: '0.5rem 0.25rem',
-            fontSize: '0.825rem'
+            padding: '0.5rem 1.25rem',
+            fontSize: '0.825rem',
+            cursor: 'pointer'
           }}
         >
           <History size={13} />

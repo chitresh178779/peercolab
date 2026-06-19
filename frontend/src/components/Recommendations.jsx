@@ -33,7 +33,7 @@ function Recommendations({ userId, subjects, onAddTask, onAddSubject, recTrigger
     }
 
     if (matchingSubject) {
-      onAddTask(matchingSubject._id, taskTitle);
+      onAddTask(matchingSubject._id, taskTitle, true);
     }
   };
 
@@ -70,8 +70,13 @@ function Recommendations({ userId, subjects, onAddTask, onAddSubject, recTrigger
             {suggestions.map((rec, index) => (
               <div key={index} className="suggestion-card animate-fade-in" style={{ animationDelay: `${index * 0.05}s`, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
                 <div className="suggestion-info" style={{ display: 'flex', flexDirection: 'column' }}>
-                  <strong>{rec.title}</strong>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Targeting: <em>{rec.subjectName}</em> (via @{rec.suggestedBy})</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                    <strong>{rec.title}</strong>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--accent-emerald)', background: '#ecfdf5', border: '1.5px solid #000000', padding: '0.1rem 0.35rem', borderRadius: '4px', boxShadow: '1.25px 1.25px 0px #000000' }}>
+                      +35 XP
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>Targeting: <em>{rec.subjectName}</em> (via @{rec.suggestedBy})</span>
                 </div>
                 
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>

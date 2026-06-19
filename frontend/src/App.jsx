@@ -14,6 +14,7 @@ import NotificationBell from './components/NotificationBell';
 import TeamChat from './components/TeamChat';
 import IdeaVault from './components/IdeaVault';
 import { subscribeToPushNotifications } from './utils/pushSubscription';
+import LandingPage from './components/LandingPage';
 import './App.css';
 
 const socket = io.connect(API_BASE_URL);
@@ -29,6 +30,7 @@ function App() {
   const [currentTab, setCurrentTab] = useState('workspace');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileSidebarClosing, setMobileSidebarClosing] = useState(false);
+  const [showLanding, setShowLanding] = useState(true);
 
   const closeMobileSidebar = () => {
     setMobileSidebarClosing(true);
@@ -63,7 +65,7 @@ function App() {
     // Set up WebSocket real-time event listener
     socket.on('friend_activity', (data) => {
       setLiveAlerts((prevAlerts) => [data, ...prevAlerts]);
-      setRecTrigger(prev => prev+1);
+      setRecTrigger(prev => prev + 1);
     });
 
     return () => {
@@ -77,11 +79,11 @@ function App() {
       const handleConnect = () => {
         socket.emit('register_user', user.id);
       };
-      
+
       if (socket.connected) {
         handleConnect();
       }
-      
+
       socket.on('connect', handleConnect);
       return () => {
         socket.off('connect', handleConnect);
@@ -91,6 +93,19 @@ function App() {
 
   // Master fetch execution for an authorized user session
   const loadDashboardData = (userId) => {
+    // 0. Fetch latest user details (for XP/Level sync)
+    axios.get(`${API_BASE_URL}/api/users/${userId}/profile`)
+      .then(res => {
+        if (res.data && res.data.user) {
+          setUser(prev => {
+            const updated = { ...prev, ...res.data.user };
+            localStorage.setItem('user', JSON.stringify(updated));
+            return updated;
+          });
+        }
+      })
+      .catch(err => console.error('User sync error:', err));
+
     // 1. Fetch user workspace subjects, tasks, and tips
     axios.get(`${API_BASE_URL}/api/subjects/user/${userId}`)
       .then(res => setSubjects(res.data))
@@ -115,6 +130,7 @@ function App() {
     setUser(null);
     setSubjects([]);
     setLiveAlerts([]);
+    setShowLanding(true);
   };
 
   const handleAddSubject = async (name) => {
@@ -137,9 +153,9 @@ function App() {
     }
   };
 
-  const handleAddTask = async (subjectId, title) => {
+  const handleAddTask = async (subjectId, title, isChallenge = false) => {
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/subjects/${subjectId}/tasks`, { title });
+      const res = await axios.post(`${API_BASE_URL}/api/subjects/${subjectId}/tasks`, { title, isChallenge });
       setSubjects(subjects.map(s => s._id === subjectId ? res.data : s));
       return { success: true };
     } catch (err) {
@@ -168,22 +184,36 @@ function App() {
 
   const handleCompleteTask = async (subjectId, taskId, taskTitle, subjectName) => {
     try {
-      await axios.put(`${API_BASE_URL}/api/subjects/${subjectId}/tasks/${taskId}`);
-      
+      const res = await axios.put(`${API_BASE_URL}/api/subjects/${subjectId}/tasks/${taskId}`, { userId: user.id });
+
       // Update local state arrays seamlessly
       setSubjects(subjects.map(s => s._id === subjectId ? {
         ...s,
         tasks: s.tasks.map(t => t._id === taskId ? { ...t, isCompleted: true } : t)
       } : s));
 
+      // Update user XP & Level
+      if (res.data.xp !== undefined && res.data.level !== undefined) {
+        setUser(prev => {
+          const updated = { ...prev, xp: res.data.xp, level: res.data.level };
+          localStorage.setItem('user', JSON.stringify(updated));
+          return updated;
+        });
+
+        if (res.data.leveledUp) {
+          alert(`🎉 LEVEL UP! You reached Level ${res.data.level}! Keep crushing it!`);
+        }
+      }
+
       // Emit network broadcast across WebSockets
       socket.emit('task_completed', {
         friendId: user.id,
-        friendName: user.username, 
+        friendName: user.username,
         subjectName,
         taskTitle,
         completedAt: new Date(),
-        subjectId
+        subjectId,
+        xpGained: res.data.xpGained
       });
     } catch (err) {
       console.error('Error finishing task item:', err);
@@ -210,9 +240,33 @@ function App() {
     }
   };
 
-  // Guard Clause: If not logged in, drop back to Auth screens
+  // Guard Clause: If not logged in, drop back to Landing or Auth screens
   if (!token || !user) {
-    return <Auth onAuthSuccess={handleAuthSuccess} />;
+    if (showLanding) {
+      return <LandingPage onEnterHub={() => setShowLanding(false)} />;
+    }
+    return (
+      <div style={{ position: 'relative' }}>
+        <button 
+          onClick={() => setShowLanding(true)} 
+          className="btn-secondary" 
+          style={{ 
+            position: 'absolute', 
+            top: '20px', 
+            left: '20px', 
+            zIndex: 100, 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.4rem',
+            fontWeight: 800,
+            cursor: 'pointer'
+          }}
+        >
+          ← Back to Info
+        </button>
+        <Auth onAuthSuccess={handleAuthSuccess} />
+      </div>
+    );
   }
 
   return (
@@ -224,59 +278,59 @@ function App() {
             <Sparkles className="animate-float" size={26} style={{ color: 'var(--accent-purple)' }} />
             <h2 className="sidebar-logo-text">PeerColab</h2>
           </div>
-          
+
           <nav className="sidebar-menu">
-            <button 
-              onClick={() => setCurrentTab('workspace')} 
+            <button
+              onClick={() => setCurrentTab('workspace')}
               className={`sidebar-menu-btn ${currentTab === 'workspace' ? 'active' : ''}`}
             >
               <LayoutGrid size={18} />
               <span>Workspace</span>
             </button>
-            <button 
-              onClick={() => setCurrentTab('vault')} 
+            <button
+              onClick={() => setCurrentTab('vault')}
               className={`sidebar-menu-btn ${currentTab === 'vault' ? 'active' : ''}`}
             >
               <Lightbulb size={18} />
               <span>Idea Vault</span>
             </button>
-            <button 
-              onClick={() => setCurrentTab('challenges')} 
+            <button
+              onClick={() => setCurrentTab('challenges')}
               className={`sidebar-menu-btn ${currentTab === 'challenges' ? 'active' : ''}`}
             >
               <Sparkles size={18} />
               <span>Challenges</span>
             </button>
-            <button 
-              onClick={() => setCurrentTab('chat')} 
+            <button
+              onClick={() => setCurrentTab('chat')}
               className={`sidebar-menu-btn ${currentTab === 'chat' ? 'active' : ''}`}
             >
               <MessageSquareCode size={18} />
               <span>Live Chat</span>
             </button>
-            <button 
-              onClick={() => setCurrentTab('feed')} 
+            <button
+              onClick={() => setCurrentTab('feed')}
               className={`sidebar-menu-btn ${currentTab === 'feed' ? 'active' : ''}`}
             >
               <Users size={18} />
               <span>Partners Feed</span>
             </button>
-            <button 
-              onClick={() => setCurrentTab('partners')} 
+            <button
+              onClick={() => setCurrentTab('partners')}
               className={`sidebar-menu-btn ${currentTab === 'partners' ? 'active' : ''}`}
             >
               <Users size={18} />
               <span>Manage Partners</span>
             </button>
-            <button 
-              onClick={() => setCurrentTab('heatmap')} 
+            <button
+              onClick={() => setCurrentTab('heatmap')}
               className={`sidebar-menu-btn ${currentTab === 'heatmap' ? 'active' : ''}`}
             >
               <Calendar size={18} />
               <span>Activity Heatmap</span>
             </button>
-            <button 
-              onClick={() => setCurrentTab('profile')} 
+            <button
+              onClick={() => setCurrentTab('profile')}
               className={`sidebar-menu-btn ${currentTab === 'profile' ? 'active' : ''}`}
             >
               <User size={18} />
@@ -289,9 +343,9 @@ function App() {
           <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.75rem', fontWeight: 700 }}>
             Logged in as @{user.username}
           </span>
-          <button 
-            onClick={handleLogout} 
-            className="btn-secondary" 
+          <button
+            onClick={handleLogout}
+            className="btn-secondary"
             style={{ width: '100%', fontSize: '0.875rem' }}
           >
             <LogOut size={14} />
@@ -302,8 +356,8 @@ function App() {
 
       {/* MOBILE HEADER */}
       <header className="mobile-header">
-        <button 
-          onClick={() => setMobileSidebarOpen(true)} 
+        <button
+          onClick={() => setMobileSidebarOpen(true)}
           className="mobile-hamburger-btn"
           title="Open Menu"
         >
@@ -320,16 +374,16 @@ function App() {
 
       {/* MOBILE TRANSLUCENT GLASS SIDEBAR OVERLAY */}
       {(mobileSidebarOpen || mobileSidebarClosing) && (
-        <div 
-          className={`mobile-sidebar-overlay ${mobileSidebarClosing ? 'closing' : ''}`} 
+        <div
+          className={`mobile-sidebar-overlay ${mobileSidebarClosing ? 'closing' : ''}`}
           onClick={closeMobileSidebar}
         >
-          <div 
-            className={`mobile-sidebar-content ${mobileSidebarClosing ? 'closing' : ''}`} 
+          <div
+            className={`mobile-sidebar-content ${mobileSidebarClosing ? 'closing' : ''}`}
             onClick={(e) => e.stopPropagation()}
           >
-            <button 
-              className="mobile-sidebar-close" 
+            <button
+              className="mobile-sidebar-close"
               onClick={closeMobileSidebar}
               title="Close Menu"
             >
@@ -345,57 +399,57 @@ function App() {
               </div>
 
               <nav className="sidebar-menu">
-                <button 
-                  onClick={() => { setCurrentTab('workspace'); closeMobileSidebar(); }} 
+                <button
+                  onClick={() => { setCurrentTab('workspace'); closeMobileSidebar(); }}
                   className={`sidebar-menu-btn ${currentTab === 'workspace' ? 'active' : ''}`}
                 >
                   <LayoutGrid size={18} />
                   <span>Workspace</span>
                 </button>
-                <button 
-                  onClick={() => { setCurrentTab('vault'); closeMobileSidebar(); }} 
+                <button
+                  onClick={() => { setCurrentTab('vault'); closeMobileSidebar(); }}
                   className={`sidebar-menu-btn ${currentTab === 'vault' ? 'active' : ''}`}
                 >
                   <Lightbulb size={18} />
                   <span>Idea Vault</span>
                 </button>
-                <button 
-                  onClick={() => { setCurrentTab('challenges'); closeMobileSidebar(); }} 
+                <button
+                  onClick={() => { setCurrentTab('challenges'); closeMobileSidebar(); }}
                   className={`sidebar-menu-btn ${currentTab === 'challenges' ? 'active' : ''}`}
                 >
                   <Sparkles size={18} />
                   <span>Challenges</span>
                 </button>
-                <button 
-                  onClick={() => { setCurrentTab('chat'); closeMobileSidebar(); }} 
+                <button
+                  onClick={() => { setCurrentTab('chat'); closeMobileSidebar(); }}
                   className={`sidebar-menu-btn ${currentTab === 'chat' ? 'active' : ''}`}
                 >
                   <MessageSquareCode size={18} />
                   <span>Live Chat</span>
                 </button>
-                <button 
-                  onClick={() => { setCurrentTab('feed'); closeMobileSidebar(); }} 
+                <button
+                  onClick={() => { setCurrentTab('feed'); closeMobileSidebar(); }}
                   className={`sidebar-menu-btn ${currentTab === 'feed' ? 'active' : ''}`}
                 >
                   <Users size={18} />
                   <span>Partners Feed</span>
                 </button>
-                <button 
-                  onClick={() => { setCurrentTab('partners'); closeMobileSidebar(); }} 
+                <button
+                  onClick={() => { setCurrentTab('partners'); closeMobileSidebar(); }}
                   className={`sidebar-menu-btn ${currentTab === 'partners' ? 'active' : ''}`}
                 >
                   <Users size={18} />
                   <span>Manage Partners</span>
                 </button>
-                <button 
-                  onClick={() => { setCurrentTab('heatmap'); closeMobileSidebar(); }} 
+                <button
+                  onClick={() => { setCurrentTab('heatmap'); closeMobileSidebar(); }}
                   className={`sidebar-menu-btn ${currentTab === 'heatmap' ? 'active' : ''}`}
                 >
                   <Calendar size={18} />
                   <span>Activity Heatmap</span>
                 </button>
-                <button 
-                  onClick={() => { setCurrentTab('profile'); closeMobileSidebar(); }} 
+                <button
+                  onClick={() => { setCurrentTab('profile'); closeMobileSidebar(); }}
                   className={`sidebar-menu-btn ${currentTab === 'profile' ? 'active' : ''}`}
                 >
                   <User size={18} />
@@ -408,9 +462,9 @@ function App() {
               <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                 Logged in as @{user.username}
               </span>
-              <button 
-                onClick={handleLogout} 
-                className="btn-secondary" 
+              <button
+                onClick={handleLogout}
+                className="btn-secondary"
                 style={{ width: '100%', fontSize: '0.875rem' }}
               >
                 <LogOut size={14} />
@@ -431,33 +485,74 @@ function App() {
               {currentTab === 'chat' ? 'Live Chat Room' : currentTab === 'feed' ? 'Partners Activity Feed' : currentTab === 'partners' ? 'Manage Study Partners' : currentTab === 'heatmap' ? 'Study & Activity Heatmap' : currentTab === 'profile' ? 'My Portfolio Workspace' : currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}
             </h1>
           </div>
-          
+
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+            {/* Level & XP Badge */}
+            <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', border: '2.5px solid #000000', borderRadius: '12px', boxShadow: '3px 3px 0px #000000', backgroundColor: '#fffbeb' }}>
+              <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#d97706', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                🏆 Lvl {user.level || 1}
+              </span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                ({user.xp || 0} XP)
+              </span>
+            </div>
+
             <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', border: '2.5px solid #000000', borderRadius: '12px', boxShadow: '3px 3px 0px #000000', backgroundColor: '#ffffff' }}>
               <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
               <span style={{ fontSize: '0.85rem', fontWeight: 700 }}>
                 Welcome, <strong style={{ color: 'var(--accent-purple)' }}>{user.username}</strong>
               </span>
             </div>
-            
+
             <div style={{ position: 'relative' }}>
               <NotificationBell userId={user.id} socket={socket} />
             </div>
           </div>
         </div>
 
-        {/* MOTIVATIONAL BANNER */}
-        <div className="quote-banner">
-          <MessageSquareCode size={24} style={{ color: 'var(--accent-purple)', marginBottom: '0.25rem' }} />
-          <h2>"{quote.text}"</h2>
-          {quote.author && <p>- {quote.author}</p>}
+        {/* MOBILE PAGE TITLE */}
+        <div className="mobile-page-title">
+          <div>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 800, letterSpacing: '0.05em' }}>PEERCOLAB HUB</span>
+            <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.6rem', fontWeight: 800, margin: '0.1rem 0 0 0', letterSpacing: '-0.02em' }}>
+              {currentTab === 'chat' ? 'Live Chat Room' : currentTab === 'feed' ? 'Partners Activity Feed' : currentTab === 'partners' ? 'Manage Study Partners' : currentTab === 'heatmap' ? 'Study & Activity Heatmap' : currentTab === 'profile' ? 'My Portfolio Workspace' : currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}
+            </h1>
+          </div>
+          
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center' }}>
+            {/* Level & XP Badge */}
+            <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.35rem 0.75rem', border: '2px solid #000000', borderRadius: '8px', boxShadow: '2px 2px 0px #000000', backgroundColor: '#fffbeb' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#d97706', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                🏆 Lvl {user.level || 1}
+              </span>
+              <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--text-secondary)' }}>
+                ({user.xp || 0} XP)
+              </span>
+            </div>
+
+            <div className="glass-card" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', padding: '0.35rem 0.75rem', border: '2px solid #000000', borderRadius: '8px', boxShadow: '2px 2px 0px #000000', backgroundColor: '#ffffff' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: '#22c55e' }} />
+              <span style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                Welcome, <strong style={{ color: 'var(--accent-purple)' }}>{user.username}</strong>
+              </span>
+            </div>
+          </div>
         </div>
+
+        {/* MOTIVATIONAL BANNER */}
+        {currentTab === 'workspace' && (
+          <div className="quote-banner">
+            <MessageSquareCode size={24} style={{ color: 'var(--accent-purple)', marginBottom: '0.25rem' }} />
+            <h2>"{quote.text}"</h2>
+            {quote.author && <p>- {quote.author}</p>}
+          </div>
+        )}
 
         {/* RENDER ACTIVE PAGE */}
         <main className="animate-fade-in" style={{ minHeight: '60vh' }}>
           {currentTab === 'workspace' && (
-            <SubjectWorkspace 
-              subjects={subjects} 
+            <SubjectWorkspace
+              subjects={subjects}
               currentUserId={user.id}
               onAddSubject={handleAddSubject}
               onDeleteSubject={handleDeleteSubject}
@@ -475,10 +570,10 @@ function App() {
           )}
 
           {currentTab === 'challenges' && (
-            <Recommendations 
-              userId={user.id} 
-              subjects={subjects} 
-              onAddTask={handleAddTask} 
+            <Recommendations
+              userId={user.id}
+              subjects={subjects}
+              onAddTask={handleAddTask}
               onAddSubject={handleAddSubject}
               recTrigger={recTrigger}
             />
@@ -495,7 +590,7 @@ function App() {
           )}
 
           {currentTab === 'partners' && (
-            <FriendManager userId={user.id} onViewProfile={setActiveProfileId} /> 
+            <FriendManager userId={user.id} onViewProfile={setActiveProfileId} />
           )}
 
           {currentTab === 'heatmap' && (
@@ -503,10 +598,10 @@ function App() {
           )}
 
           {currentTab === 'profile' && (
-            <UserProfile 
-              userId={user.id} 
-              profileId={user.id} 
-              onClose={() => {}} 
+            <UserProfile
+              userId={user.id}
+              profileId={user.id}
+              onClose={() => { }}
               currentUsername={user.username}
               isSelf={true}
               inline={true}
@@ -517,9 +612,9 @@ function App() {
 
       {/* USER PROFILE MODAL (for viewing other partners' profiles on click) */}
       {activeProfileId && activeProfileId !== user.id && (
-        <UserProfile 
-          userId={user.id} 
-          profileId={activeProfileId} 
+        <UserProfile
+          userId={user.id}
+          profileId={activeProfileId}
           onClose={() => setActiveProfileId(null)}
           currentUsername={user.username}
           isSelf={false}

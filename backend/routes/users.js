@@ -21,11 +21,11 @@ router.post('/register', async (req, res) => {
         user.password = await bcrypt.hash(password, salt);
         await user.save();
 
-        // Create token payload
+                // Create token payload
         const payload = { userId: user._id };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-        res.status(201).json({ token, user: { id: user._id, username: user.username } });
+        res.status(201).json({ token, user: { id: user._id, username: user.username, xp: user.xp || 0, level: user.level || 1 } });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
@@ -48,7 +48,7 @@ router.post('/login', async (req, res) => {
         const payload = { userId: user._id };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-        res.json({ token, user: { id: user._id, username: user.username } });
+        res.json({ token, user: { id: user._id, username: user.username, xp: user.xp || 0, level: user.level || 1 } });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }
@@ -235,7 +235,9 @@ router.get('/:userId/profile', async (req, res) => {
                 id: user._id,
                 username: user.username,
                 email: user.email,
-                friendsCount: user.friends.length
+                friendsCount: user.friends.length,
+                xp: user.xp || 0,
+                level: user.level || 1
             },
             subjects
         });

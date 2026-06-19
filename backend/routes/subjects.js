@@ -57,9 +57,9 @@ router.delete('/:subjectId', async (req, res) => {
 // @desc    Add a task to a specific subject
 router.post('/:subjectId/tasks', async (req, res) => {
     try {
-        const { title } = req.body;
+        const { title, isChallenge } = req.body;
         if (!title || !title.trim()) {
-            return res.status(400).json({ message: 'Task title is required' });
+             return res.status(400).json({ message: 'Task title is required' });
         }
 
         const subject = await Subject.findById(req.params.subjectId);
@@ -75,7 +75,7 @@ router.post('/:subjectId/tasks', async (req, res) => {
         }
 
         // Push the new task into the subject's tasks array
-        subject.tasks.push({ title: title.trim() });
+        subject.tasks.push({ title: title.trim(), isChallenge: !!isChallenge });
         await subject.save();
 
         const populated = await Subject.findById(subject._id)
@@ -113,6 +113,7 @@ router.delete('/:subjectId/tasks/:taskId', async (req, res) => {
 // @desc    Mark a task as completed
 router.put('/:subjectId/tasks/:taskId', async (req, res) => {
     try {
+        const { userId } = req.body;
         const subject = await Subject.findById(req.params.subjectId);
         if (!subject) return res.status(404).json({ message: 'Subject not found' });
 
@@ -120,12 +121,49 @@ router.put('/:subjectId/tasks/:taskId', async (req, res) => {
         const task = subject.tasks.id(req.params.taskId);
         if (!task) return res.status(404).json({ message: 'Task not found' });
 
+        if (task.isCompleted) {
+            return res.status(400).json({ message: 'Task is already completed' });
+        }
+
         // Update task status and timestamp
         task.isCompleted = true;
         task.completedAt = Date.now();
 
         await subject.save();
-        res.json({ message: 'Task completed!', task });
+
+        let xpGained = 0;
+        let leveledUp = false;
+        let newUserXp = 0;
+        let newUserLevel = 1;
+
+        if (userId) {
+            const User = require('../models/User');
+            const user = await User.findById(userId);
+            if (user) {
+                // Award 15 XP for normal task, 35 XP for accepted challenge
+                xpGained = task.isChallenge ? 35 : 15;
+                user.xp = (user.xp || 0) + xpGained;
+
+                const oldLevel = user.level || 1;
+                const newLevel = Math.floor(user.xp / 100) + 1;
+                if (newLevel > oldLevel) {
+                    leveledUp = true;
+                }
+                user.level = newLevel;
+                await user.save();
+                newUserXp = user.xp;
+                newUserLevel = user.level;
+            }
+        }
+
+        res.json({ 
+            message: 'Task completed!', 
+            task,
+            xpGained,
+            leveledUp,
+            xp: newUserXp,
+            level: newUserLevel
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server Error', error: error.message });
     }

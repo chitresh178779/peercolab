@@ -1,24 +1,35 @@
 :root {
   /* Color Palette (Sketchbook Light Brutalism) */
-  --bg-dark: #FAF8F5;        /* Warm sketchbook paper/cream */
-  --bg-card: #FFFFFF;        /* Crisp white paper cards */
+  --bg-dark: #FAF8F5;
+  /* Warm sketchbook paper/cream */
+  --bg-card: #FFFFFF;
+  /* Crisp white paper cards */
   --bg-card-hover: #FFFFFF;
-  --border-light: #000000;   /* Solid black ink lines */
+  --border-light: #000000;
+  /* Solid black ink lines */
   --border-brutal: #000000;
-  --text-primary: #000000;   /* Ink black */
-  --text-secondary: #000000; /* Solid black */
-  --text-muted: #262626;     /* Dark charcoal */
+  --text-primary: #000000;
+  /* Ink black */
+  --text-secondary: #000000;
+  /* Solid black */
+  --text-muted: #262626;
+  /* Dark charcoal */
 
   /* Accents - Sketchbook ink highlights */
-  --accent-purple: #78716C;       /* Soft pencil gray */
+  --accent-purple: #78716C;
+  /* Soft pencil gray */
   --accent-purple-glow: rgba(120, 113, 108, 0.15);
-  --accent-blue: #2563EB;         /* Clean blueprint blue */
+  --accent-blue: #2563EB;
+  /* Clean blueprint blue */
   --accent-blue-glow: rgba(37, 99, 235, 0.1);
-  --accent-emerald: #15803D;      /* Deep ink green */
+  --accent-emerald: #15803D;
+  /* Deep ink green */
   --accent-emerald-glow: rgba(22, 128, 61, 0.1);
-  --accent-rose: #B91C1C;         /* Muted ink red */
+  --accent-rose: #B91C1C;
+  /* Muted ink red */
   --accent-rose-glow: rgba(185, 28, 28, 0.1);
-  --accent-amber: #C2410C;        /* Mustard/ochre warning */
+  --accent-amber: #C2410C;
+  /* Mustard/ochre warning */
   --accent-amber-glow: rgba(194, 65, 12, 0.1);
 
   /* Font Families */
@@ -53,7 +64,7 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   /* Dotted paper background grid */
-  background-image: 
+  background-image:
     radial-gradient(rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
   background-size: 24px 24px;
   background-attachment: fixed;
@@ -65,16 +76,21 @@ body {
 ::-webkit-scrollbar {
   width: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: var(--bg-dark);
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #D6D3D1; /* stone-300 */
+  background: #D6D3D1;
+  /* stone-300 */
   border-radius: 4px;
   border: 1px solid #000000;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #A8A29E; /* stone-400 */
+  background: #A8A29E;
+  /* stone-400 */
 }
 
 #root {
@@ -85,18 +101,39 @@ body {
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-6px);
+  }
 }
 
 @keyframes pulseGlow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 0.9; }
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 0.9;
+  }
 }
 
 .animate-fade-in {
@@ -125,12 +162,10 @@ body {
   left: -100%;
   width: 50%;
   height: 100%;
-  background: linear-gradient(
-    to right,
-    transparent,
-    rgba(255, 255, 255, 0.05),
-    transparent
-  );
+  background: linear-gradient(to right,
+      transparent,
+      rgba(255, 255, 255, 0.05),
+      transparent);
   transform: skewX(-25deg);
   transition: 0.75s;
 }

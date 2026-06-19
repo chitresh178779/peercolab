@@ -279,7 +279,9 @@ function TeamChat({ user, socket }) {
       className="glass-card"
       style={{
         display: 'flex',
-        height: '650px',
+        height: 'calc(100vh - 220px)',
+        minHeight: '520px',
+        maxHeight: '750px',
         padding: 0,
         overflow: 'hidden',
         border: '3px solid #000000',
