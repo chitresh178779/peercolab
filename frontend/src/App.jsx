@@ -15,6 +15,7 @@ import TeamChat from './components/TeamChat';
 import IdeaVault from './components/IdeaVault';
 import { subscribeToPushNotifications } from './utils/pushSubscription';
 import LandingPage from './components/LandingPage';
+import BackgroundAnimation from './components/BackgroundAnimation';
 import './App.css';
 
 const socket = io.connect(API_BASE_URL);
@@ -243,10 +244,16 @@ function App() {
   // Guard Clause: If not logged in, drop back to Landing or Auth screens
   if (!token || !user) {
     if (showLanding) {
-      return <LandingPage onEnterHub={() => setShowLanding(false)} />;
+      return (
+        <>
+          <BackgroundAnimation />
+          <LandingPage onEnterHub={() => setShowLanding(false)} />
+        </>
+      );
     }
     return (
       <div style={{ position: 'relative' }}>
+        <BackgroundAnimation />
         <button 
           onClick={() => setShowLanding(true)} 
           className="btn-secondary" 
@@ -271,6 +278,7 @@ function App() {
 
   return (
     <div className="app-layout-wrapper">
+      <BackgroundAnimation />
       {/* DESKTOP SIDEBAR */}
       <aside className="desktop-sidebar">
         <div>

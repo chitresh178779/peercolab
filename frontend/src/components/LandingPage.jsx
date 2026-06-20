@@ -189,7 +189,7 @@ function LandingPage({ onEnterHub }) {
             <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.25rem', border: '2px solid #000000' }}>
               <MessageSquareCode size={24} style={{ color: 'var(--accent-emerald)' }} />
             </div>
-            <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.75rem' }}>Live WhatsApp Chat</h4>
+            <h4 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.25rem', fontWeight: 800, marginBottom: '0.75rem' }}>Live Chat</h4>
             <p style={{ fontSize: '0.9rem', color: '#444', lineHeight: 1.5 }}>
               Talk with study groups or directly in private. Pin key messages, search chats, reply to quotes, leave reactions, and share formatted code snippets.
             </p>
@@ -239,7 +239,7 @@ function LandingPage({ onEnterHub }) {
               style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', border: '2px solid #000', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', background: activeTab === 'chat' ? '#000' : '#fff', color: activeTab === 'chat' ? '#fff' : '#000', boxShadow: activeTab === 'chat' ? 'none' : '2px 2px 0px #000' }}
             >
               <MessageSquareCode size={18} />
-              <span>3. WhatsApp Chat</span>
+              <span>3.  Chat</span>
             </button>
 
             <button
@@ -499,13 +499,13 @@ function LandingPage({ onEnterHub }) {
             <h4 style={{ fontFamily: 'var(--font-heading)', fontWeight: 800, marginBottom: '1rem' }}>Why choose PeerColab?</h4>
             <ul style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', listStyle: 'none' }}>
               <li style={{ display: 'flex', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600 }}>
-                ✅ <strong>Zero Distraction:</strong> Beautiful neobrutalist sketchbook interface keeps visual noise out.
+                ✔️ <strong>Zero Distraction:</strong> Beautiful neobrutalist sketchbook interface keeps visual noise out.
               </li>
               <li style={{ display: 'flex', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600 }}>
-                ✅ <strong>Real-time Co-learning:</strong> Live sockets sync work the microsecond your peers complete it.
+                ✔️ <strong>Co-learning:</strong> Live sockets sync work the microsecond your peers complete it.
               </li>
               <li style={{ display: 'flex', gap: '0.5rem', fontSize: '0.85rem', fontWeight: 600 }}>
-                ✅ <strong>Privacy-First:</strong> Full local control of data formats with easy exports (CSV/JSON).
+                ✔️ <strong>Privacy-First:</strong> Full local control of data formats with easy exports (CSV/JSON).
               </li>
             </ul>
           </div>
