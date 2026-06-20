@@ -628,10 +628,7 @@ form[style*="display: flex"] {
   align-items: center;
   min-height: 100vh;
   padding: 1.5rem;
-  background-color: var(--bg-dark);
-  background-image:
-    radial-gradient(rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
-  background-size: 24px 24px;
+  background: transparent;
 }
 
 .auth-card {
