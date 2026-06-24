@@ -13,9 +13,11 @@ import Auth from './components/Auth';
 import NotificationBell from './components/NotificationBell';
 import TeamChat from './components/TeamChat';
 import IdeaVault from './components/IdeaVault';
+import Groups from './components/Groups';
 import { subscribeToPushNotifications } from './utils/pushSubscription';
 import LandingPage from './components/LandingPage';
 import BackgroundAnimation from './components/BackgroundAnimation';
+import SharedIdea from './components/SharedIdea';
 import './App.css';
 
 const socket = io.connect(API_BASE_URL);
@@ -32,6 +34,19 @@ function App() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileSidebarClosing, setMobileSidebarClosing] = useState(false);
   const [showLanding, setShowLanding] = useState(true);
+  const [sharedIdeaId, setSharedIdeaId] = useState(null);
+
+  // Check URL path on mount for public shared idea route
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/shared/idea/')) {
+      const parts = path.split('/');
+      const id = parts[parts.length - 1];
+      if (id) {
+        setSharedIdeaId(id);
+      }
+    }
+  }, []);
 
   const closeMobileSidebar = () => {
     setMobileSidebarClosing(true);
@@ -241,6 +256,22 @@ function App() {
     }
   };
 
+  // Shared Idea route override
+  if (sharedIdeaId) {
+    return (
+      <div style={{ position: 'relative', minHeight: '100vh' }}>
+        <BackgroundAnimation />
+        <SharedIdea 
+          ideaId={sharedIdeaId} 
+          onClose={() => {
+            setSharedIdeaId(null);
+            window.history.pushState(null, '', '/');
+          }} 
+        />
+      </div>
+    );
+  }
+
   // Guard Clause: If not logged in, drop back to Landing or Auth screens
   if (!token || !user) {
     if (showLanding) {
@@ -315,6 +346,13 @@ function App() {
             >
               <MessageSquareCode size={18} />
               <span>Live Chat</span>
+            </button>
+            <button
+              onClick={() => setCurrentTab('groups')}
+              className={`sidebar-menu-btn ${currentTab === 'groups' ? 'active' : ''}`}
+            >
+              <Users size={18} />
+              <span>Study Groups</span>
             </button>
             <button
               onClick={() => setCurrentTab('feed')}
@@ -436,6 +474,13 @@ function App() {
                   <span>Live Chat</span>
                 </button>
                 <button
+                  onClick={() => { setCurrentTab('groups'); closeMobileSidebar(); }}
+                  className={`sidebar-menu-btn ${currentTab === 'groups' ? 'active' : ''}`}
+                >
+                  <Users size={18} />
+                  <span>Study Groups</span>
+                </button>
+                <button
                   onClick={() => { setCurrentTab('feed'); closeMobileSidebar(); }}
                   className={`sidebar-menu-btn ${currentTab === 'feed' ? 'active' : ''}`}
                 >
@@ -490,7 +535,7 @@ function App() {
           <div>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 800, letterSpacing: '0.05em' }}>PEERCOLAB HUB</span>
             <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: 800, margin: '0.2rem 0 0 0', letterSpacing: '-0.03em' }}>
-              {currentTab === 'chat' ? 'Live Chat Room' : currentTab === 'feed' ? 'Partners Activity Feed' : currentTab === 'partners' ? 'Manage Study Partners' : currentTab === 'heatmap' ? 'Study & Activity Heatmap' : currentTab === 'profile' ? 'My Portfolio Workspace' : currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}
+              {currentTab === 'chat' ? 'Live Chat Room' : currentTab === 'feed' ? 'Partners Activity Feed' : currentTab === 'partners' ? 'Manage Study Partners' : currentTab === 'heatmap' ? 'Study & Activity Heatmap' : currentTab === 'profile' ? 'My Portfolio Workspace' : currentTab === 'groups' ? 'Collaborative Study Groups' : currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}
             </h1>
           </div>
 
@@ -523,7 +568,7 @@ function App() {
           <div>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 800, letterSpacing: '0.05em' }}>PEERCOLAB HUB</span>
             <h1 style={{ fontFamily: 'var(--font-heading)', fontSize: '1.6rem', fontWeight: 800, margin: '0.1rem 0 0 0', letterSpacing: '-0.02em' }}>
-              {currentTab === 'chat' ? 'Live Chat Room' : currentTab === 'feed' ? 'Partners Activity Feed' : currentTab === 'partners' ? 'Manage Study Partners' : currentTab === 'heatmap' ? 'Study & Activity Heatmap' : currentTab === 'profile' ? 'My Portfolio Workspace' : currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}
+              {currentTab === 'chat' ? 'Live Chat Room' : currentTab === 'feed' ? 'Partners Activity Feed' : currentTab === 'partners' ? 'Manage Study Partners' : currentTab === 'heatmap' ? 'Study & Activity Heatmap' : currentTab === 'profile' ? 'My Portfolio Workspace' : currentTab === 'groups' ? 'Collaborative Study Groups' : currentTab.charAt(0).toUpperCase() + currentTab.slice(1)}
             </h1>
           </div>
           
@@ -591,6 +636,13 @@ function App() {
             <div style={{ width: '100%' }}>
               <TeamChat user={user} socket={socket} />
             </div>
+          )}
+
+          {currentTab === 'groups' && (
+            <Groups
+              currentUserId={user.id}
+              subjects={subjects}
+            />
           )}
 
           {currentTab === 'feed' && (

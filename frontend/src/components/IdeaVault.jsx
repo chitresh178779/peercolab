@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   Plus, Search, Trash2, Star, Maximize2, Grid, List, 
-  Loader2, Sparkles, Lightbulb, X, ArrowUpDown, ChevronDown, Check, Settings
+  Loader2, Sparkles, Lightbulb, X, ArrowUpDown, ChevronDown, Check, Settings,
+  Copy, Share2
 } from 'lucide-react';
 import { API_BASE_URL } from '../config';
 
@@ -18,6 +19,27 @@ export default function IdeaVault({ currentUserId }) {
   const [newIdeaType, setNewIdeaType] = useState('');
   const [newIdeaPriority, setNewIdeaPriority] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [copiedIdeaId, setCopiedIdeaId] = useState(null);
+
+  const handleShareWhatsApp = (idea, e) => {
+    if (e) e.stopPropagation();
+    const shareUrl = `${window.location.origin}/shared/idea/${idea._id}`;
+    let message = `💡 *Check out this idea on PeerColab:* 💡\n\n`;
+    message += `*${idea.title}*\n`;
+    message += `Project: ${idea.project || 'General'}\n\n`;
+    message += `${shareUrl}`;
+    
+    const encoded = encodeURIComponent(message);
+    window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+  };
+
+  const handleCopyClipboard = (idea, e) => {
+    if (e) e.stopPropagation();
+    const shareUrl = `${window.location.origin}/shared/idea/${idea._id}`;
+    navigator.clipboard.writeText(shareUrl);
+    setCopiedIdeaId(idea._id);
+    setTimeout(() => setCopiedIdeaId(null), 2000);
+  };
 
   // Settings State
   const [showSettingsModal, setShowSettingsModal] = useState(false);
@@ -471,6 +493,21 @@ export default function IdeaVault({ currentUserId }) {
                     <Star size={16} fill={idea.favorite ? "var(--accent-yellow, #eab308)" : "none"} />
                   </button>
                   <button 
+                    onClick={(e) => handleCopyClipboard(idea, e)}
+                    className={`favorite-action-btn ${copiedIdeaId === idea._id ? 'active' : ''}`}
+                    title={copiedIdeaId === idea._id ? "Copied!" : "Copy to Clipboard"}
+                  >
+                    {copiedIdeaId === idea._id ? <Check size={16} style={{ color: '#16a34a' }} /> : <Copy size={16} />}
+                  </button>
+                  <button 
+                    onClick={(e) => handleShareWhatsApp(idea, e)}
+                    className="favorite-action-btn"
+                    style={{ color: '#22c55e' }}
+                    title="Share to WhatsApp"
+                  >
+                    <Share2 size={16} />
+                  </button>
+                  <button 
                     onClick={(e) => handleDeleteIdea(idea._id, e)}
                     className="delete-action-btn"
                     title="Delete Idea"
@@ -594,6 +631,22 @@ export default function IdeaVault({ currentUserId }) {
                         )}
                       </button>
                       <button 
+                        onClick={(e) => handleCopyClipboard(idea, e)} 
+                        className="row-action-btn view"
+                        title={copiedIdeaId === idea._id ? "Copied!" : "Copy to Clipboard"}
+                        style={{ color: copiedIdeaId === idea._id ? '#16a34a' : 'inherit' }}
+                      >
+                        {copiedIdeaId === idea._id ? <Check size={14} /> : <Copy size={14} />}
+                      </button>
+                      <button 
+                        onClick={(e) => handleShareWhatsApp(idea, e)} 
+                        className="row-action-btn view"
+                        style={{ color: '#22c55e' }}
+                        title="Share on WhatsApp"
+                      >
+                        <Share2 size={14} />
+                      </button>
+                      <button 
                         onClick={(e) => handleDeleteIdea(idea._id, e)} 
                         className="row-action-btn delete"
                         title="Delete"
@@ -630,7 +683,7 @@ export default function IdeaVault({ currentUserId }) {
                 </span>
               </div>
               <h2 className="modal-title">{activeExpandedIdea.title}</h2>
-              <div className="modal-favorite-bar">
+              <div className="modal-favorite-bar" style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
                 <button 
                   onClick={(e) => handleToggleFavorite(activeExpandedIdea._id, e)}
                   className={`btn-fav-modal ${activeExpandedIdea.favorite ? 'active' : ''}`}
@@ -638,7 +691,34 @@ export default function IdeaVault({ currentUserId }) {
                   <Star size={16} fill={activeExpandedIdea.favorite ? "var(--accent-yellow, #eab308)" : "none"} />
                   <span>{activeExpandedIdea.favorite ? 'Favorited' : 'Add to Favorites'}</span>
                 </button>
-                <span className="modal-date">Captured on {new Date(activeExpandedIdea.createdAt).toLocaleString()}</span>
+
+                <button 
+                  onClick={(e) => handleShareWhatsApp(activeExpandedIdea, e)}
+                  className="btn-fav-modal"
+                  style={{ borderColor: '#22c55e', color: '#15803d', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                >
+                  <Share2 size={16} />
+                  <span>Share to WhatsApp</span>
+                </button>
+
+                <button 
+                  onClick={(e) => handleCopyClipboard(activeExpandedIdea, e)}
+                  className="btn-fav-modal"
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                >
+                  {copiedIdeaId === activeExpandedIdea._id ? (
+                    <>
+                      <Check size={16} style={{ color: '#16a34a' }} />
+                      <span style={{ color: '#16a34a' }}>Copied Link!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={16} />
+                      <span>Copy Share Link</span>
+                    </>
+                  )}
+                </button>
+                <span className="modal-date" style={{ marginLeft: 'auto' }}>Captured on {new Date(activeExpandedIdea.createdAt).toLocaleString()}</span>
               </div>
             </div>
 

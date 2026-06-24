@@ -453,7 +453,7 @@ function UserProfile({ userId, profileId, onClose, currentUsername, isSelf, inli
   const Wrapper = ({ children }) => {
     if (inline) {
       return (
-        <div className="workspace-pane animate-fade-in" style={{ width: '100%', maxWidth: '100%', background: '#ffffff', border: '2.5px solid #000000', borderRadius: '16px', padding: '2.2rem' }}>
+        <div className="workspace-pane profile-inline-container animate-fade-in">
           {children}
         </div>
       );
@@ -656,17 +656,17 @@ function UserProfile({ userId, profileId, onClose, currentUsername, isSelf, inli
               <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <div className="form-field-group">
                   <label className="form-field-label">Google Gemini API Key</label>
-                  <div style={{ display: 'flex', gap: '0.75rem', width: '100%', flexWrap: 'wrap' }}>
+                  <div className="integration-input-group">
                     <input
                       type="password"
                       value={geminiKeyInput}
                       onChange={(e) => setGeminiKeyInput(e.target.value)}
                       placeholder={dbMaskedKey ? dbMaskedKey : "AIzaSy... (not configured)"}
                       className="form-field-input"
-                      style={{ flex: 1, minWidth: '240px', letterSpacing: geminiKeyInput ? '0.125em' : 'normal' }}
+                      style={{ letterSpacing: geminiKeyInput ? '0.125em' : 'normal' }}
                       disabled={savingKey}
                     />
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div className="btn-actions">
                       {dbMaskedKey ? (
                         <button
                           className="btn-secondary delete-btn-footer"

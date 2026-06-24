@@ -192,6 +192,18 @@ router.get('/user/:userId', async (req, res) => {
   }
 });
 
+// @route   GET /api/ideas/:ideaId
+// @desc    Get details of a single idea (Public)
+router.get('/:ideaId', async (req, res) => {
+  try {
+    const idea = await Idea.findById(req.params.ideaId).populate('user', 'username email');
+    if (!idea) return res.status(404).json({ message: 'Idea not found' });
+    res.json(idea);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error fetching idea details', error: error.message });
+  }
+});
+
 // @route   PUT /api/ideas/:ideaId/favorite
 // @desc    Toggle favorite status of an idea
 router.put('/:ideaId/favorite', async (req, res) => {

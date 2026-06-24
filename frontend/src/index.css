@@ -1,6 +1,6 @@
 :root {
   /* Color Palette (Sketchbook Light Brutalism) */
-  --bg-dark: #FAF8F5;
+  --bg-dark: #FAF9F6;
   /* Warm sketchbook paper/cream */
   --bg-card: #FFFFFF;
   /* Crisp white paper cards */
@@ -15,35 +15,35 @@
   --text-muted: #262626;
   /* Dark charcoal */
 
-  /* Accents - Sketchbook ink highlights */
-  --accent-purple: #78716C;
-  /* Soft pencil gray */
-  --accent-purple-glow: rgba(120, 113, 108, 0.15);
-  --accent-blue: #2563EB;
-  /* Clean blueprint blue */
-  --accent-blue-glow: rgba(37, 99, 235, 0.1);
-  --accent-emerald: #15803D;
-  /* Deep ink green */
-  --accent-emerald-glow: rgba(22, 128, 61, 0.1);
-  --accent-rose: #B91C1C;
-  /* Muted ink red */
-  --accent-rose-glow: rgba(185, 28, 28, 0.1);
-  --accent-amber: #C2410C;
-  /* Mustard/ochre warning */
-  --accent-amber-glow: rgba(194, 65, 12, 0.1);
+  /* Accents - Sketchbook ink highlights - attractive, premium, NOT NEON */
+  --accent-purple: #6366f1;
+  /* Premium Indigo */
+  --accent-purple-glow: rgba(99, 102, 241, 0.12);
+  --accent-blue: #3b82f6;
+  /* Soft blueprint blue */
+  --accent-blue-glow: rgba(59, 130, 246, 0.12);
+  --accent-emerald: #10b981;
+  /* Deep soft mint green */
+  --accent-emerald-glow: rgba(16, 185, 129, 0.12);
+  --accent-rose: #f43f5e;
+  /* Premium warm rose */
+  --accent-rose-glow: rgba(244, 63, 94, 0.12);
+  --accent-amber: #f59e0b;
+  /* Mustard/ochre warm amber */
+  --accent-amber-glow: rgba(245, 158, 11, 0.12);
 
   /* Font Families */
   --font-heading: 'Space Grotesk', system-ui, -apple-system, sans-serif;
   --font-body: 'Outfit', system-ui, -apple-system, sans-serif;
 
-  /* Box Shadows (Brutalist flat offset sketchbook shadows) */
-  --shadow-purple: 4px 4px 0px 0px #000000;
-  --shadow-blue: 4px 4px 0px 0px #000000;
-  --shadow-emerald: 4px 4px 0px 0px #000000;
-  --shadow-rose: 4px 4px 0px 0px #000000;
-  --shadow-amber: 4px 4px 0px 0px #000000;
-  --shadow-brutal: 5px 5px 0px 0px #000000;
-  --shadow-glass: 5px 5px 0px 0px #000000;
+  /* Box Shadows (Brutalist flat offset sketchbook shadows - colored supporting shadows!) */
+  --shadow-purple: 4px 4px 0px 0px var(--accent-purple);
+  --shadow-blue: 4px 4px 0px 0px var(--accent-blue);
+  --shadow-emerald: 4px 4px 0px 0px var(--accent-emerald);
+  --shadow-rose: 4px 4px 0px 0px var(--accent-rose);
+  --shadow-amber: 4px 4px 0px 0px var(--accent-amber);
+  --shadow-brutal: 5px 5px 0px 0px var(--accent-purple);
+  --shadow-glass: 5px 5px 0px 0px var(--accent-purple);
 
   /* Transitions */
   --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
@@ -63,9 +63,9 @@ body {
   font-family: var(--font-body);
   min-height: 100vh;
   overflow-x: hidden;
-  /* Dotted paper background grid */
+  /* Dotted paper background grid using soft indigo */
   background-image:
-    radial-gradient(rgba(0, 0, 0, 0.08) 1.5px, transparent 1.5px);
+    radial-gradient(rgba(99, 102, 241, 0.06) 1.5px, transparent 1.5px);
   background-size: 24px 24px;
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;

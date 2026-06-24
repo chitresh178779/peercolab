@@ -16,14 +16,18 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json()); // Parses incoming JSON requests
+app.use(express.json({ limit: '50mb' })); // Parses incoming JSON requests with size limits
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-app.use('/api/users',require('./routes/users'));
+app.use('/api/users', require('./routes/users'));
 app.use('/api/subjects', require('./routes/subjects'));
 app.use('/api/quotes', require('./routes/quotes'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/ideas', require('./routes/ideas'));
+app.use('/api/groups', require('./routes/groups'));
 
 // A simple test route to verify the API is running
 app.get('/api/status', (req, res) => {
