@@ -1037,30 +1037,20 @@ export default function Groups({ currentUserId, subjects }) {
                   return (
                     <div
                       key={member._id}
-                      className="glass-card"
-                      style={{
-                        border: '2px solid #000000',
-                        borderRadius: '10px',
-                        padding: '0.75rem 1rem',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        backgroundColor: '#ffffff',
-                        boxShadow: '2px 2px 0px #000000'
-                      }}
+                      className="group-member-card glass-card"
                     >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <span style={{ fontWeight: 800, fontSize: '0.9rem' }}>
+                      <div className="group-member-info">
+                        <span className="group-member-username">
                           @{member.username} {isTargetSelf && <strong style={{ color: 'var(--accent-purple)' }}>(You)</strong>}
                         </span>
 
                         {isMemberCreator ? (
-                          <span style={{ fontSize: '0.65rem', backgroundColor: '#fffbeb', border: '1.5px solid #d97706', color: '#b45309', padding: '1px 6px', borderRadius: '10px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                          <span style={{ fontSize: '0.65rem', backgroundColor: '#fffbeb', border: '1.5px solid #d97706', color: '#b45309', padding: '1px 6px', borderRadius: '10px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.15rem', flexShrink: 0 }}>
                             <Shield size={10} fill="#d97706" />
                             <span>Creator</span>
                           </span>
                         ) : isMemberAdmin ? (
-                          <span style={{ fontSize: '0.65rem', backgroundColor: '#f0fdf4', border: '1.5px solid #16a34a', color: '#15803d', padding: '1px 6px', borderRadius: '10px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.15rem' }}>
+                          <span style={{ fontSize: '0.65rem', backgroundColor: '#f0fdf4', border: '1.5px solid #16a34a', color: '#15803d', padding: '1px 6px', borderRadius: '10px', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.15rem', flexShrink: 0 }}>
                             <Shield size={10} />
                             <span>Admin</span>
                           </span>
@@ -1069,13 +1059,13 @@ export default function Groups({ currentUserId, subjects }) {
 
                       {/* Role admin actions (Only visible to Admins, managing other members) */}
                       {(isAdmin || isCreator) && !isMemberCreator && !isTargetSelf && (
-                        <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                        <div className="group-member-actions">
                           {isMemberAdmin ? (
                             /* Creator or Admins can demote */
                             <button
                               onClick={() => handleRoleAction(member._id, 'demote')}
                               className="btn-secondary"
-                              style={{ padding: '2px 8px', fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}
+                              style={{ padding: '4px 10px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}
                               title="Dismiss as admin"
                             >
                               <ShieldAlert size={10} />
@@ -1086,7 +1076,7 @@ export default function Groups({ currentUserId, subjects }) {
                             <button
                               onClick={() => handleRoleAction(member._id, 'promote')}
                               className="btn-primary"
-                              style={{ padding: '2px 8px', fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}
+                              style={{ padding: '4px 10px', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}
                               title="Make admin"
                             >
                               <UserCheck size={10} />
@@ -1098,7 +1088,7 @@ export default function Groups({ currentUserId, subjects }) {
                           <button
                             onClick={() => handleRemoveMember(member._id, member.username)}
                             className="btn-secondary"
-                            style={{ padding: '2px 8px', fontSize: '0.7rem', borderColor: 'var(--accent-rose)', color: 'var(--accent-rose)', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}
+                            style={{ padding: '4px 10px', fontSize: '0.75rem', borderColor: 'var(--accent-rose)', color: 'var(--accent-rose)', display: 'inline-flex', alignItems: 'center', gap: '0.15rem' }}
                             title="Remove member"
                           >
                             <UserMinus size={10} />
@@ -1151,7 +1141,7 @@ export default function Groups({ currentUserId, subjects }) {
                       Permissions
                     </h4>
 
-                    <div className="form-manual-fields" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="permissions-settings-grid">
                       <div className="form-field-group">
                         <label className="form-field-label">Who can upload resources?</label>
                         <select
@@ -1193,7 +1183,7 @@ export default function Groups({ currentUserId, subjects }) {
                     </div>
                   )}
 
-                  <div className="form-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div className="form-footer group-settings-footer">
                     <div>
                       {isCreator && (
                         <button
