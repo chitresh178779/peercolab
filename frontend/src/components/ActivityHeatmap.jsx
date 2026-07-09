@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Calendar, Flame, CheckCircle, TrendingUp, HelpCircle } from 'lucide-react';
 
 function ActivityHeatmap({ subjects }) {
@@ -11,6 +11,15 @@ function ActivityHeatmap({ subjects }) {
     maxInADay: 0,
   });
   const [hoveredCell, setHoveredCell] = useState(null);
+  const lastTouchTimeRef = useRef(0);
+
+  useEffect(() => {
+    const handleTouch = () => {
+      lastTouchTimeRef.current = Date.now();
+    };
+    window.addEventListener('touchstart', handleTouch, { passive: true });
+    return () => window.removeEventListener('touchstart', handleTouch);
+  }, []);
 
   // Helper to format Date into local YYYY-MM-DD
   const getLocalDateString = (dateInput) => {
@@ -317,7 +326,7 @@ function ActivityHeatmap({ subjects }) {
                     position: 'relative'
                   }}
                   onMouseEnter={(e) => {
-                    if (isFuture) return;
+                    if (isFuture || Date.now() - lastTouchTimeRef.current < 1000) return;
                     e.currentTarget.style.transform = 'scale(1.3)';
                     e.currentTarget.style.zIndex = '10';
                     setHoveredCell({
@@ -328,9 +337,48 @@ function ActivityHeatmap({ subjects }) {
                     });
                   }}
                   onMouseLeave={(e) => {
+                    if (isFuture || Date.now() - lastTouchTimeRef.current < 1000) return;
                     e.currentTarget.style.transform = 'scale(1)';
                     e.currentTarget.style.zIndex = '1';
                     setHoveredCell(null);
+                  }}
+                  onTouchStart={(e) => {
+                    if (isFuture) return;
+                    lastTouchTimeRef.current = Date.now();
+                    const dateVal = day.toLocaleDateString(undefined, { dateStyle: 'medium' });
+                    if (hoveredCell && hoveredCell.date === dateVal) {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.zIndex = '1';
+                      setHoveredCell(null);
+                    } else {
+                      e.currentTarget.style.transform = 'scale(1.3)';
+                      e.currentTarget.style.zIndex = '10';
+                      const touch = e.touches && e.touches[0] ? e.touches[0] : (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0] : { clientX: 100, clientY: 100 });
+                      setHoveredCell({
+                        date: dateVal,
+                        count,
+                        x: touch.clientX,
+                        y: touch.clientY
+                      });
+                    }
+                  }}
+                  onClick={(e) => {
+                    if (isFuture || Date.now() - lastTouchTimeRef.current < 1000) return;
+                    const dateVal = day.toLocaleDateString(undefined, { dateStyle: 'medium' });
+                    if (hoveredCell && hoveredCell.date === dateVal) {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.zIndex = '1';
+                      setHoveredCell(null);
+                    } else {
+                      e.currentTarget.style.transform = 'scale(1.3)';
+                      e.currentTarget.style.zIndex = '10';
+                      setHoveredCell({
+                        date: dateVal,
+                        count,
+                        x: e.clientX,
+                        y: e.clientY
+                      });
+                    }
                   }}
                 />
               );

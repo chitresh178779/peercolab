@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Sparkles,
   ArrowRight,
@@ -45,6 +45,15 @@ function LandingPage({ onEnterHub }) {
 
   // Heatmap Mock State
   const [hoveredCell, setHoveredCell] = useState(null);
+  const lastTouchTimeRef = useRef(0);
+
+  useEffect(() => {
+    const handleTouch = () => {
+      lastTouchTimeRef.current = Date.now();
+    };
+    window.addEventListener('touchstart', handleTouch, { passive: true });
+    return () => window.removeEventListener('touchstart', handleTouch);
+  }, []);
 
   const toggleTask = (id) => {
     setMockTasks(prev => prev.map(t => {
@@ -200,8 +209,8 @@ function LandingPage({ onEnterHub }) {
 
       {/* INTERACTIVE PLAYGROUND SHOWCASE */}
       <section id="interactive-playground" style={{ marginBottom: '6rem' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem', minWidth: 0 }}>
+          <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: '2rem', fontWeight: 800, textTransform: 'uppercase', marginBottom: '0.5rem', minWidth: 0 }}>
             Interactive Playground
           </h3>
           <p style={{ color: '#555', fontWeight: 600 }}>
@@ -218,7 +227,7 @@ function LandingPage({ onEnterHub }) {
             <button
               onClick={() => setActiveTab('workspace')}
               className={`sidebar-menu-btn ${activeTab === 'workspace' ? 'active' : ''}`}
-              style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', border: '2px solid #000', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', background: activeTab === 'workspace' ? '#000' : '#fff', color: activeTab === 'workspace' ? '#fff' : '#000', boxShadow: activeTab === 'workspace' ? 'none' : '2px 2px 0px #000' }}
+              style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', border: '2px solid #000', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', background: activeTab === 'workspace' ? '#000' : '#fff', color: activeTab === 'workspace' ? '#fff' : '#000', boxShadow: activeTab === 'workspace' ? 'none' : '2px 2px 0px #000', minWidth: 0 }}
             >
               <LayoutGrid size={18} />
               <span>1. Collaborative Board</span>
@@ -227,7 +236,7 @@ function LandingPage({ onEnterHub }) {
             <button
               onClick={() => setActiveTab('vault')}
               className={`sidebar-menu-btn ${activeTab === 'vault' ? 'active' : ''}`}
-              style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', border: '2px solid #000', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', background: activeTab === 'vault' ? '#000' : '#fff', color: activeTab === 'vault' ? '#fff' : '#000', boxShadow: activeTab === 'vault' ? 'none' : '2px 2px 0px #000' }}
+              style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', border: '2px solid #000', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', background: activeTab === 'vault' ? '#000' : '#fff', color: activeTab === 'vault' ? '#fff' : '#000', boxShadow: activeTab === 'vault' ? 'none' : '2px 2px 0px #000', minWidth: 0 }}
             >
               <Lightbulb size={18} />
               <span>2. Brainstorm Vault</span>
@@ -236,20 +245,20 @@ function LandingPage({ onEnterHub }) {
             <button
               onClick={() => setActiveTab('chat')}
               className={`sidebar-menu-btn ${activeTab === 'chat' ? 'active' : ''}`}
-              style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', border: '2px solid #000', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', background: activeTab === 'chat' ? '#000' : '#fff', color: activeTab === 'chat' ? '#fff' : '#000', boxShadow: activeTab === 'chat' ? 'none' : '2px 2px 0px #000' }}
+              style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', border: '2px solid #000', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', background: activeTab === 'chat' ? '#000' : '#fff', color: activeTab === 'chat' ? '#fff' : '#000', boxShadow: activeTab === 'chat' ? 'none' : '2px 2px 0px #000', minWidth: 0 }}
             >
               <MessageSquareCode size={18} />
               <span>3.  Chat</span>
             </button>
 
-            <button
+            {/* <button
               onClick={() => setActiveTab('heatmap')}
               className={`sidebar-menu-btn ${activeTab === 'heatmap' ? 'active' : ''}`}
-              style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', border: '2px solid #000', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', background: activeTab === 'heatmap' ? '#000' : '#fff', color: activeTab === 'heatmap' ? '#fff' : '#000', boxShadow: activeTab === 'heatmap' ? 'none' : '2px 2px 0px #000' }}
+              style={{ width: '100%', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', border: '2px solid #000', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer', background: activeTab === 'heatmap' ? '#000' : '#fff', color: activeTab === 'heatmap' ? '#fff' : '#000', boxShadow: activeTab === 'heatmap' ? 'none' : '2px 2px 0px #000', minWidth: 0 }}
             >
               <Calendar size={18} />
               <span>4. Study Heatmap</span>
-            </button>
+            </button> */}
 
             {/* no xp helper note */}
           </div>
@@ -433,19 +442,25 @@ function LandingPage({ onEnterHub }) {
                       return (
                         <div
                           key={idx}
+                          className="playground-heatmap-cell"
                           onMouseEnter={() => {
+                            if (Date.now() - lastTouchTimeRef.current < 1000) return;
                             setHoveredCell({ dateStr, hours });
                           }}
-                          onMouseLeave={() => setHoveredCell(null)}
+                          onMouseLeave={() => {
+                            if (Date.now() - lastTouchTimeRef.current < 1000) return;
+                            setHoveredCell(null);
+                          }}
+                          onTouchStart={() => {
+                            lastTouchTimeRef.current = Date.now();
+                            setHoveredCell(hoveredCell?.dateStr === dateStr ? null : { dateStr, hours });
+                          }}
+                          onClick={() => {
+                            if (Date.now() - lastTouchTimeRef.current < 1000) return;
+                            setHoveredCell(hoveredCell?.dateStr === dateStr ? null : { dateStr, hours });
+                          }}
                           style={{
-                            width: '16px',
-                            height: '16px',
-                            backgroundColor: shades[shadeIndex],
-                            border: '1px solid #000',
-                            borderRadius: '3px',
-                            cursor: 'pointer',
-                            transition: 'transform 0.1s ease',
-                            transform: hoveredCell?.dateStr === dateStr ? 'scale(1.2)' : 'none'
+                            backgroundColor: shades[shadeIndex]
                           }}
                         />
                       );
