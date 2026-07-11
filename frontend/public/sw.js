@@ -1,5 +1,13 @@
 // Service Worker for PeerColab Push Notifications
 
+self.addEventListener('install', (event) => {
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil(self.clients.claim());
+});
+
 self.addEventListener('push', (event) => {
     let data = {};
     if (event.data) {
@@ -25,27 +33,9 @@ self.addEventListener('push', (event) => {
         ]
     };
 
-    // Check if any clients (app windows) are currently open and focused
-    const promiseChain = clients.matchAll({
-        type: 'window',
-        includeUncontrolled: true
-    }).then((windowClients) => {
-        let isFocused = false;
-        for (let i = 0; i < windowClients.length; i++) {
-            const client = windowClients[i];
-            if (client.focused) {
-                isFocused = true;
-                break;
-            }
-        }
-
-        // Only show the system notification if the app is NOT in focus
-        if (!isFocused) {
-            return self.registration.showNotification(title, options);
-        }
-    });
-
-    event.waitUntil(promiseChain);
+    // Always display the system notification to prevent the browser (especially Chrome on Android)
+    // from force-showing a generic "This site has been updated in the background" alert.
+    event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener('notificationclick', (event) => {

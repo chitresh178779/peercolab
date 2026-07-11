@@ -2,24 +2,36 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { Bell, MessageSquare, CheckCircle, UserPlus, Check, Trash2, ShieldAlert, Clock } from 'lucide-react';
 import { API_BASE_URL } from '../config';
+import { subscribeToPushNotifications } from '../utils/pushSubscription';
 
 function NotificationBell({ userId, socket }) {
   const [notifications, setNotifications] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [permission, setPermission] = useState(
+    typeof window !== 'undefined' && 'Notification' in window ? window.Notification.permission : 'default'
+  );
   const dropdownRef = useRef(null);
+
+  const handleEnableNotifications = async (e) => {
+    e.stopPropagation();
+    if (typeof window !== 'undefined' && 'Notification' in window) {
+      try {
+        const result = await window.Notification.requestPermission();
+        setPermission(result);
+        if (result === 'granted') {
+          await subscribeToPushNotifications(userId);
+        }
+      } catch (err) {
+        console.error('Error enabling push notifications:', err);
+      }
+    }
+  };
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
   useEffect(() => {
     // 1. Fetch initial notifications
     fetchNotifications();
-
-    // Request desktop notification permission on mount
-    if (typeof window !== 'undefined' && 'Notification' in window) {
-      if (window.Notification.permission === 'default') {
-        window.Notification.requestPermission();
-      }
-    }
 
     // 2. Setup real-time listener for incoming notifications
     if (socket) {
@@ -171,6 +183,50 @@ function NotificationBell({ userId, socket }) {
               </button>
             )}
           </div>
+
+          {permission === 'default' && (
+            <div 
+              className="glass-card push-promo-card animate-fade-in"
+              style={{
+                padding: '0.75rem',
+                borderRadius: '8px',
+                border: '2px solid #000000',
+                backgroundColor: '#f5f3ff',
+                boxShadow: '2px 2px 0px #000000',
+                marginBottom: '0.75rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.4rem',
+                textAlign: 'left'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Bell size={15} style={{ color: 'var(--accent-purple)' }} />
+                <span style={{ fontWeight: 800, fontSize: '0.825rem', color: '#000000' }}>Enable Phone Alerts</span>
+              </div>
+              <p style={{ fontSize: '0.725rem', margin: 0, color: '#4b5563', lineHeight: 1.25 }}>
+                Get notified on tasks & messages even when the app is closed.
+              </p>
+              <button 
+                onClick={handleEnableNotifications}
+                className="btn-purple"
+                style={{
+                  padding: '0.3rem 0.65rem',
+                  fontSize: '0.7rem',
+                  alignSelf: 'flex-start',
+                  border: '1.5px solid #000000',
+                  borderRadius: '6px',
+                  boxShadow: '1.5px 1.5px 0px #000000',
+                  backgroundColor: '#ffffff',
+                  color: '#000000',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                Enable
+              </button>
+            </div>
+          )}
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {notifications.length === 0 ? (

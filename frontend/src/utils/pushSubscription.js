@@ -29,7 +29,10 @@ export async function subscribeToPushNotifications(userId) {
 
     try {
         // 1. Register the Service Worker (points to the /sw.js in public folder)
-        const registration = await navigator.serviceWorker.register('/sw.js');
+        const registration = await navigator.serviceWorker.register('/sw.js', {
+            scope: '/',
+            updateViaCache: 'none'
+        });
         console.log('Service Worker registered successfully with scope:', registration.scope);
 
         // 2. Request notification permission if not already granted/denied
